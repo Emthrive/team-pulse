@@ -101,6 +101,27 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v4: KPI-urile care numără livrabile devin automate, legate de taskuri prin etichete.
+  // (Cele de business — venit, reach, uptime, satisfacţie — rămân manuale: cifrele vin din afara platformei.)
+  if ((S.version || 2) < 4) {
+    const conv: { n: string; dept: string; tag: string }[] = [
+      { n: "Postări publicate", dept: "mkt", tag: "Postare" },
+      { n: "Videoclipuri editate", dept: "mkt", tag: "Video" },
+      { n: "Bug-uri rezolvate", dept: "it", tag: "Bug" },
+      { n: "Funcţionalităţi livrate", dept: "it", tag: "Feature" },
+      { n: "Propuneri trimise", dept: "part", tag: "Propunere" },
+    ];
+    conv.forEach((c) => {
+      const k = S.kpis.find((x) => x.n === c.n && x.dept === c.dept);
+      if (k && !k.auto) {
+        k.auto = "tasks_done";
+        k.tag = c.tag;
+      }
+    });
+    S.version = 4;
+    changed = true;
+  }
+
   // „Data de acoperire" a fost unificată cu deadline-ul: mutăm valorile vechi.
   (S.tasks || []).forEach((t) => {
     const legacy = t as { coverDate?: string; coverLabel?: string };

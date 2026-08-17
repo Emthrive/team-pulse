@@ -48,15 +48,22 @@ export function Tasks() {
 
   return (
     <>
+      <div className="dept-tabs">
+        <button className={!flt.dept ? "on" : ""} onClick={() => setFlt({ dept: "" })}>
+          Toate
+        </button>
+        {S.departments.map((d) => (
+          <button
+            key={d.id}
+            className={flt.dept === d.id ? "on" : ""}
+            onClick={() => setFlt({ dept: d.id })}
+          >
+            {d.n}
+          </button>
+        ))}
+      </div>
+
       <div className="filters">
-        <select value={flt.dept} onChange={(e) => setFlt({ dept: e.target.value })}>
-          <option value="">Toate departamentele</option>
-          {S.departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.n}
-            </option>
-          ))}
-        </select>
         <select value={flt.member} onChange={(e) => setFlt({ member: e.target.value })}>
           <option value="">Toată echipa</option>
           {S.members
