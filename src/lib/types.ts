@@ -36,6 +36,10 @@ export interface Task {
   title: string;
   dept: string;
   assignee: string;
+  /** Responsabil propus, în așteptarea acceptării (asignare care trebuie acceptată). */
+  pendingAssignee?: string;
+  /** Cine a propus asignarea (pentru notificare). */
+  assignedBy?: string;
   deadline: string;
   priority: PriorityId;
   status: StatusId;
@@ -104,4 +108,4 @@ export interface Filters {
 }
 
 export type SyncState = "ok" | "wait" | "err";
-export type TabId = "dash" | "tasks" | "kpi" | "team" | "set";
+export type TabId = "dash" | "tasks" | "kpi" | "team" | "notif" | "set";

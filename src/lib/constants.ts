@@ -30,6 +30,7 @@ export const TABS: { id: TabId; n: string }[] = [
   { id: "tasks", n: "Taskuri" },
   { id: "kpi", n: "KPI" },
   { id: "team", n: "Echipă" },
+  { id: "notif", n: "Notificări" },
   { id: "set", n: "Setări" },
 ];
 

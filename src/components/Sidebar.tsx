@@ -4,6 +4,7 @@
 // ============================================================
 import { signOut } from "firebase/auth";
 import {
+  Bell,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -27,17 +28,15 @@ const NAV: { id: TabId; n: string; Icon: LucideIcon }[] = [
   { id: "tasks", n: "Taskuri", Icon: ListChecks },
   { id: "kpi", n: "KPI", Icon: Target },
   { id: "team", n: "Echipă", Icon: Users },
+  { id: "notif", n: "Notificări", Icon: Bell },
   { id: "set", n: "Setări", Icon: SettingsIcon },
 ];
-
-const syncTxt: Record<string, string> = { ok: "salvat", wait: "salvez…", err: "doar local" };
 
 export function Sidebar() {
   const S = useStore((s) => s.S);
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
   const tab = useStore((s) => s.tab);
-  const sync = useStore((s) => s.sync);
   const setTab = useStore((s) => s.setTab);
   const collapsed = useStore((s) => s.collapsed);
   const toggleCollapsed = useStore((s) => s.toggleCollapsed);
@@ -48,7 +47,10 @@ export function Sidebar() {
 
   // Identitatea e automată: membrul al cărui email coincide cu contul logat.
   // S poate fi încă null cât timp se încarcă datele din Firestore — nu accesăm nimic pe null.
-  const meMember = S ? mem(S, currentMemberId(S, me, authEmail)) : undefined;
+  const myId = S ? currentMemberId(S, me, authEmail) : "";
+  const meMember = S && myId ? mem(S, myId) : undefined;
+  // Notificări: asignări în așteptare pentru mine.
+  const notifCount = S ? S.tasks.filter((t) => t.pendingAssignee && t.pendingAssignee === myId).length : 0;
 
   const identityName = meMember ? meMember.n : authEmail || "cont local";
   const identitySub = meMember && authEmail ? authEmail : null;
@@ -75,17 +77,21 @@ export function Sidebar() {
       </div>
 
       <nav className="side-nav">
-        {nav.map(({ id, n, Icon }) => (
-          <button
-            key={id}
-            className={id === tab ? "on" : ""}
-            onClick={() => setTab(id)}
-            title={collapsed ? n : undefined}
-          >
-            <Icon size={19} strokeWidth={2.2} />
-            {!collapsed && <span className="label">{n}</span>}
-          </button>
-        ))}
+        {nav.map(({ id, n, Icon }) => {
+          const badge = id === "notif" && notifCount > 0 ? notifCount : 0;
+          return (
+            <button
+              key={id}
+              className={id === tab ? "on" : ""}
+              onClick={() => setTab(id)}
+              title={collapsed ? n : undefined}
+            >
+              <Icon size={19} strokeWidth={2.2} />
+              {!collapsed && <span className="label">{n}</span>}
+              {badge > 0 && <span className="nav-badge">{badge}</span>}
+            </button>
+          );
+        })}
       </nav>
 
       <div className="side-foot">
@@ -97,10 +103,6 @@ export function Sidebar() {
             <span className="foot-txt">
               <span className="foot-name">{identityName}</span>
               <span className="foot-mail">{identitySub || (meMember ? "membru în echipă" : "cont conectat")}</span>
-              <span className={`foot-sync ${sync}`}>
-                <span className={`dot ${sync === "err" ? "err" : sync === "wait" ? "wait" : ""}`} />
-                {syncTxt[sync]}
-              </span>
             </span>
           )}
         </div>

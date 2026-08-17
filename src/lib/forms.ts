@@ -4,6 +4,7 @@
 //  Fiecare re-găsește entitatea după id în onSubmit/onDelete,
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
+import { currentMemberId } from "./calc";
 import { CRIT, PRIO, STATUS } from "./constants";
 import { inviteUser } from "./invite";
 import type { CrmState, Member, Task } from "./types";
@@ -15,21 +16,26 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
   extra.concat(S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })));
 
 // ---------------------------------------------------------------- TASKURI
-function taskFields(S: CrmState, t: Task | null, fltDept: string): FormField[] {
+function taskFields(
+  S: CrmState,
+  t: Task | null,
+  fltDept: string,
+  self?: { id: string; dept: string },
+): FormField[] {
   return [
     { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
     {
       key: "dept",
       label: "Departament",
       type: "select",
-      value: t ? t.dept : fltDept || S.departments[0].id,
+      value: t ? t.dept : self?.dept || fltDept || S.departments[0].id,
       options: S.departments.map((d) => ({ v: d.id, l: d.n })),
     },
     {
       key: "assignee",
       label: "Responsabil",
       type: "select",
-      value: t ? t.assignee : "",
+      value: t ? t.assignee : self?.id || "",
       options: memberOpts(S, [{ v: "", l: "nealocat" }]),
     },
     { key: "deadline", label: "Termen limită", type: "date", value: t ? t.deadline : "" },
@@ -54,19 +60,40 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string): FormField[] {
   ];
 }
 
+/** Regula de asignare cu acceptare: propunerea către altcineva devine „pending". */
+function applyAssignment(tk: Task, chosen: string, selfId: string) {
+  if (chosen === tk.assignee) return; // fără schimbare
+  if (chosen === "" || chosen === selfId) {
+    // nealocat sau ție însuți → direct, fără acceptare
+    tk.assignee = chosen;
+    tk.pendingAssignee = "";
+    tk.assignedBy = "";
+  } else {
+    // propus altui utilizator → trebuie să accepte; responsabilul rămâne neschimbat
+    tk.pendingAssignee = chosen;
+    tk.assignedBy = selfId;
+  }
+}
+
 export function newTask() {
-  const { S, flt, openForm } = st();
+  const { S, me, authEmail, flt, openForm } = st();
   if (!S) return;
+  // Pre-completăm cu utilizatorul curent ca responsabil + departamentul lui.
+  const selfId = currentMemberId(S, me, authEmail);
+  const selfMember = selfId ? S.members.find((m) => m.id === selfId) : undefined;
+  const self = selfMember ? { id: selfMember.id, dept: selfMember.dept } : undefined;
   openForm({
     title: "Task nou",
-    fields: taskFields(S, null, flt.dept),
+    fields: taskFields(S, null, flt.dept, self),
     onSubmit: (d, draft) => {
       if (!d.title.trim()) return;
-      draft.tasks.push({
+      const t: Task = {
         id: uid(),
         title: d.title.trim(),
         dept: d.dept,
-        assignee: d.assignee,
+        assignee: selfId, // creatorul devine automat responsabil
+        pendingAssignee: "",
+        assignedBy: "",
         deadline: d.deadline,
         priority: d.priority as Task["priority"],
         status: d.status as Task["status"],
@@ -79,16 +106,20 @@ export function newTask() {
         coverDate: d.coverDate || "",
         createdAt: todayISO(),
         completedAt: d.status === "gata" ? todayISO() : "",
-      });
+      };
+      // Dacă la creare alegi alt responsabil, devine propunere (pending), nu asignare directă.
+      applyAssignment(t, d.assignee, selfId);
+      draft.tasks.push(t);
     },
   });
 }
 
 export function editTask(id: string) {
-  const { S, openForm } = st();
+  const { S, me, authEmail, openForm } = st();
   if (!S) return;
   const t = S.tasks.find((x) => x.id === id);
   if (!t) return;
+  const selfId = currentMemberId(S, me, authEmail);
   openForm({
     title: "Editează task",
     fields: taskFields(S, t, ""),
@@ -97,7 +128,8 @@ export function editTask(id: string) {
       if (!tk) return;
       tk.title = d.title.trim() || tk.title;
       tk.dept = d.dept;
-      tk.assignee = d.assignee;
+      // Reasignarea către alt utilizator devine propunere care trebuie acceptată.
+      applyAssignment(tk, d.assignee, selfId);
       tk.deadline = d.deadline;
       tk.priority = d.priority as Task["priority"];
       if (d.status === "gata" && tk.status !== "gata") tk.completedAt = todayISO();

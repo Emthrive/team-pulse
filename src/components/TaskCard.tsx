@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
-import { depName, isLate, memName, taskProgress } from "@/lib/calc";
+import { currentMemberId, depName, isLate, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
 import { editSub, editTask, setCover } from "@/lib/forms";
 import { useStore } from "@/lib/store";
@@ -15,10 +15,15 @@ import { Avatar, Bar } from "./ui/primitives";
 
 export function TaskCard({ task }: { task: Task }) {
   const S = useStore((s) => s.S)!;
+  const me = useStore((s) => s.me);
+  const authEmail = useStore((s) => s.authEmail);
   const open = useStore((s) => !!s.open[task.id]);
   const toggleOpen = useStore((s) => s.toggleOpen);
   const admin = useIsAdmin();
   const [subInput, setSubInput] = useState("");
+
+  // Poţi edita dacă eşti admin sau eşti responsabilul taskului.
+  const canEdit = admin || task.assignee === currentMemberId(S, me, authEmail);
 
   const t = task;
   const p = taskProgress(t);
@@ -42,6 +47,11 @@ export function TaskCard({ task }: { task: Task }) {
         <div style={{ flex: 1, minWidth: 0 }} onClick={() => toggleOpen(t.id)}>
           <div className="t">{t.title}</div>
           <div className="meta">
+            {subs.length > 0 ? (
+              <span className="chip gold">Epic</span>
+            ) : (
+              <span className="chip turq">Task</span>
+            )}
             <span className={`chip ${stCls(t.status)}`}>{stName(t.status)}</span>
             <span className={`chip ${prCls(t.priority)}`}>{prName(t.priority)}</span>
             <span className="chip">{depName(S, t.dept)}</span>
@@ -95,7 +105,7 @@ export function TaskCard({ task }: { task: Task }) {
                   {s.deadline ? " · " + fmtDate(s.deadline) : ""}
                 </div>
               </div>
-              {admin && (
+              {canEdit && (
                 <button className="btn ghost sm" onClick={() => editSub(t.id, s.id)}>
                   ⋯
                 </button>
@@ -150,7 +160,7 @@ export function TaskCard({ task }: { task: Task }) {
                 Reînnoiesc ciclul
               </button>
             )}
-            {admin && (
+            {canEdit && (
               <button className="btn ghost sm" onClick={() => editTask(t.id)}>
                 Editează
               </button>

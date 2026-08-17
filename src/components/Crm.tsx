@@ -10,6 +10,7 @@ import { Sidebar } from "./Sidebar";
 import { Modal } from "./ui/Modal";
 import { Dash } from "./views/Dash";
 import { Kpi } from "./views/Kpi";
+import { Notifications } from "./views/Notifications";
 import { Settings } from "./views/Settings";
 import { Tasks } from "./views/Tasks";
 import { Team } from "./views/Team";
@@ -28,7 +29,8 @@ export function Crm() {
 
   // Setări e doar pentru admin; dacă un user normal ajunge cumva pe „set”, cade pe Panou.
   const activeTab = tab === "set" && !admin ? "dash" : tab;
-  const showFab = admin && (activeTab === "tasks" || activeTab === "dash");
+  // Oricine autentificat îşi poate crea taskuri.
+  const showFab = activeTab === "tasks" || activeTab === "dash";
 
   return (
     <div className="shell">
@@ -45,6 +47,8 @@ export function Crm() {
             <Kpi />
           ) : activeTab === "team" ? (
             <Team />
+          ) : activeTab === "notif" ? (
+            <Notifications />
           ) : (
             <Settings />
           )}

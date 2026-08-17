@@ -102,6 +102,27 @@ export function onlyMine() {
   st().setFlt({ dept: "", member: id, status: "", only: "" });
 }
 
+/** Accept o asignare propusă → devin responsabil. */
+export function acceptAssignment(taskId: string) {
+  st().mutate((S) => {
+    const t = S.tasks.find((x) => x.id === taskId);
+    if (!t || !t.pendingAssignee) return;
+    t.assignee = t.pendingAssignee;
+    t.pendingAssignee = "";
+    t.assignedBy = "";
+  });
+}
+
+/** Refuz o asignare propusă → rămâne la responsabilul curent. */
+export function rejectAssignment(taskId: string) {
+  st().mutate((S) => {
+    const t = S.tasks.find((x) => x.id === taskId);
+    if (!t) return;
+    t.pendingAssignee = "";
+    t.assignedBy = "";
+  });
+}
+
 // ---------------------------------------------------------------- date / export
 function download(name: string, content: string, type?: string) {
   const a = document.createElement("a");
