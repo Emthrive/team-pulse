@@ -87,7 +87,9 @@ function canEditKpiVals(S: import("./types").CrmState, deptId: string): boolean 
 }
 
 export function bump(id: string, dir: number) {
-  const { kmonth } = st();
+  const { kstart, kend } = st();
+  if (kstart !== kend) return; // editare doar pe o singură lună selectată
+  const kmonth = kstart;
   st().mutate((S) => {
     const k = S.kpis.find((x) => x.id === id);
     if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
@@ -100,7 +102,9 @@ export function bump(id: string, dir: number) {
 }
 
 export function setKpiVal(id: string, v: string) {
-  const { kmonth } = st();
+  const { kstart, kend } = st();
+  if (kstart !== kend) return; // editare doar pe o singură lună selectată
+  const kmonth = kstart;
   st().mutate((S) => {
     const k = S.kpis.find((x) => x.id === id);
     if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri

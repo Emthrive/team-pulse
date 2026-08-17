@@ -47,13 +47,39 @@ export function Modal() {
           const v = data[fl.key] ?? "";
           let ctl: React.ReactNode;
           if (fl.type === "select") {
+            const opts = fl.options || [];
+            // Opțiunile consecutive cu același grup (g) apar sub un header <optgroup>.
+            const rendered: React.ReactNode[] = [];
+            let i = 0;
+            while (i < opts.length) {
+              const g = opts[i].g;
+              if (!g) {
+                rendered.push(
+                  <option key={opts[i].v} value={opts[i].v}>
+                    {opts[i].l}
+                  </option>,
+                );
+                i++;
+                continue;
+              }
+              const groupItems = [];
+              while (i < opts.length && opts[i].g === g) {
+                groupItems.push(opts[i]);
+                i++;
+              }
+              rendered.push(
+                <optgroup key={"g:" + g} label={g}>
+                  {groupItems.map((o) => (
+                    <option key={o.v} value={o.v}>
+                      {o.l}
+                    </option>
+                  ))}
+                </optgroup>,
+              );
+            }
             ctl = (
               <select value={v} onChange={(e) => setField(fl.key, e.target.value)}>
-                {(fl.options || []).map((o) => (
-                  <option key={o.v} value={o.v}>
-                    {o.l}
-                  </option>
-                ))}
+                {rendered}
               </select>
             );
           } else if (fl.type === "textarea") {

@@ -74,11 +74,6 @@ export function Tasks() {
               </option>
             ))}
         </select>
-        <select value={flt.only} onChange={(e) => setFlt({ only: e.target.value as typeof flt.only })}>
-          <option value="">Fără filtru</option>
-          <option value="late">Doar întârziate</option>
-          <option value="week">Săptămâna asta</option>
-        </select>
         {me && mem(S, me) && (
           <button className="btn sm" onClick={() => onlyMine()}>
             Ale mele

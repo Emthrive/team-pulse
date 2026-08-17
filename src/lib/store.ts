@@ -23,7 +23,8 @@ export interface FormField {
   type?: "text" | "select" | "textarea" | "range" | "date" | "number" | "checks";
   value?: string | number;
   ph?: string;
-  options?: { v: string; l: string }[];
+  /** `g` = grup (optgroup) — opțiunile consecutive cu același g apar sub un header comun. */
+  options?: { v: string; l: string; g?: string }[];
   min?: number;
   max?: number;
   step?: number | string;
@@ -50,7 +51,9 @@ interface Store {
   tab: TabId;
   open: Record<string, boolean>;
   flt: Filters;
-  kmonth: string;
+  /** Perioada KPI: de la kstart la kend (YYYY-MM), implicit luna curentă. */
+  kstart: string;
+  kend: string;
   emonth: string;
   form: FormConfig | null;
   collapsed: boolean;
@@ -65,7 +68,7 @@ interface Store {
   toggleOpen: (id: string) => void;
   setFlt: (patch: Partial<Filters>) => void;
   resetFlt: () => void;
-  setKMonth: (v: string) => void;
+  setKRange: (start: string, end: string) => void;
   setEMonth: (v: string) => void;
   toggleCollapsed: () => void;
 
@@ -115,7 +118,8 @@ export const useStore = create<Store>((set, get) => {
     tab: "dash",
     open: {},
     flt: { ...emptyFlt },
-    kmonth: monthISO(),
+    kstart: monthISO(),
+    kend: monthISO(),
     emonth: monthISO(),
     form: null,
     collapsed: false,
@@ -235,8 +239,11 @@ export const useStore = create<Store>((set, get) => {
     resetFlt() {
       set({ flt: { ...emptyFlt } });
     },
-    setKMonth(v) {
-      set({ kmonth: v });
+    setKRange(start, end) {
+      let a = start || monthISO();
+      let b = end || monthISO();
+      if (a > b) [a, b] = [b, a];
+      set({ kstart: a, kend: b });
     },
     setEMonth(v) {
       set({ emonth: v });

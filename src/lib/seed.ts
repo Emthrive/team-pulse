@@ -30,9 +30,8 @@ export function seed(): CrmState {
 
   const K: Kpi[] = [
     kpi("Postări publicate", "mkt", 30, "buc"),
-    kpi("Reach organic lunar", "mkt", 200000, "vizualizări"),
-    kpi("Lead-uri generate din social", "mkt", 60, "lead-uri"),
     kpi("Videoclipuri editate", "mkt", 28, "buc"),
+    kpi("Campanii realizate", "mkt", 2, "buc"),
     kpi("Bug-uri rezolvate", "it", 15, "buc"),
     kpi("Funcţionalităţi livrate", "it", 3, "buc"),
     kpi("Venit lunar", "sales", 48000, "RON"),
@@ -134,6 +133,35 @@ export function migrate(S: CrmState): boolean {
       if (!Array.isArray(m.depts) || !m.depts.length) m.depts = m.dept ? [m.dept] : [];
     });
     S.version = 6;
+    changed = true;
+  }
+
+  // v7: KPI pentru tipul de livrabil „Campanie" (Marketing).
+  if ((S.version || 2) < 7) {
+    if (!S.kpis.some((k) => k.dept === "mkt" && (k.tag || "") === "Campanie")) {
+      S.kpis.push({
+        id: uid(),
+        n: "Campanii realizate",
+        dept: "mkt",
+        assignee: "",
+        target: 2,
+        unit: "buc",
+        dir: "up",
+        vals: {},
+        auto: "tasks_done",
+        tag: "Campanie",
+      });
+    }
+    S.version = 7;
+    changed = true;
+  }
+
+  // v8: scoatem din Marketing metricile care nu-şi au locul aici (vin din analytics, nu din muncă de echipă).
+  if ((S.version || 2) < 8) {
+    S.kpis = S.kpis.filter(
+      (k) => !(k.dept === "mkt" && (k.n === "Reach organic lunar" || k.n === "Lead-uri generate din social")),
+    );
+    S.version = 8;
     changed = true;
   }
 

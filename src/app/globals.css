@@ -1012,3 +1012,25 @@ textarea {
     height: 14px;
   }
 }
+
+/* ============================================================
+   SELECTOR DE PERIOADĂ (input type="month")
+============================================================ */
+@layer components {
+  .month-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    color: #fff;
+    border-radius: 9px;
+    padding: 7px 9px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color-scheme: dark;
+    flex: 0 0 auto;
+  }
+  .month-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) sepia(1) saturate(3) hue-rotate(150deg);
+    cursor: pointer;
+  }
+}

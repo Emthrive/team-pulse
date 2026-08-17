@@ -28,17 +28,21 @@ export function isLate(t: Task): boolean {
   return t.deadline < todayISO();
 }
 
-/** Valoarea calculată automat din taskuri pentru un KPI cu sursă auto. */
-export function kpiAutoVal(S: CrmState, k: Kpi, mth: string): number {
+/** Taskurile relevante pentru un KPI: departament + filtru de etichetă (+ responsabil). */
+function kpiScopedTasks(S: CrmState, k: Kpi): { base: Task[]; scoped: Task[] } {
   const tag = (k.tag || "").trim().toLowerCase();
-  // Scoping pe departament + filtru opțional de etichetă.
   const base = S.tasks.filter(
     (t) =>
       t.dept === k.dept &&
       (!tag || (t.tags || []).some((g) => g.trim().toLowerCase() === tag)),
   );
-  // Dacă KPI-ul are responsabil, numărăm doar taskurile lui.
   const scoped = k.assignee ? base.filter((t) => t.assignee === k.assignee) : base;
+  return { base, scoped };
+}
+
+/** Valoarea calculată automat din taskuri pentru un KPI cu sursă auto. */
+export function kpiAutoVal(S: CrmState, k: Kpi, mth: string): number {
+  const { base, scoped } = kpiScopedTasks(S, k);
 
   switch (k.auto) {
     case "tasks_done":
@@ -87,6 +91,74 @@ export function kpiScore(S: CrmState, k: Kpi, mth: string): number {
   return Math.max(0, Math.min(100, Math.round((v / t) * 100)));
 }
 
+// ---------------------------------------------------------------- PERIOADĂ (interval de luni)
+
+/** Lunile din intervalul [start, end] (YYYY-MM), max 24. */
+export function monthsInRange(start: string, end: string): string[] {
+  let [ys, ms] = start.split("-").map(Number);
+  let [ye, meM] = end.split("-").map(Number);
+  if (!ys || !ms || !ye || !meM) return [start || end].filter(Boolean);
+  if (ys > ye || (ys === ye && ms > meM)) {
+    [ys, ye] = [ye, ys];
+    [ms, meM] = [meM, ms];
+  }
+  const out: string[] = [];
+  let y = ys;
+  let m = ms;
+  while ((y < ye || (y === ye && m <= meM)) && out.length < 24) {
+    out.push(y + "-" + String(m).padStart(2, "0"));
+    m++;
+    if (m > 12) {
+      m = 1;
+      y++;
+    }
+  }
+  return out;
+}
+
+/** KPI de tip rată (%, /10, „% la termen”) — pe interval se face media, nu suma. */
+export const isRateKpi = (k: Kpi) => /%|\/10/.test(k.unit || "") || k.auto === "on_time_rate";
+
+/** Valoarea pe interval: sumă pentru numărători, medie/ponderat pentru rate. */
+export function kpiValRange(S: CrmState, k: Kpi, months: string[]): number {
+  if (!months.length) return 0;
+  if (months.length === 1) return kpiVal(S, k, months[0]);
+  if (k.auto === "on_time_rate") {
+    // rată ponderată pe toate finalizările din interval
+    const { scoped } = kpiScopedTasks(S, k);
+    const set = new Set(months);
+    const comps = scoped.flatMap((t) => (t.completions || []).filter((c) => set.has(c.d.slice(0, 7))));
+    if (!comps.length) return 0;
+    return Math.round((comps.filter((c) => c.onTime).length / comps.length) * 100);
+  }
+  if (k.auto) return months.reduce((a, m) => a + kpiAutoVal(S, k, m), 0);
+  if (isRateKpi(k)) {
+    const withVal = months.filter((m) => (k.vals || {})[m] !== undefined);
+    if (!withVal.length) return 0;
+    return Math.round(withVal.reduce((a, m) => a + Number(k.vals[m] || 0), 0) / withVal.length);
+  }
+  return months.reduce((a, m) => a + Number((k.vals || {})[m] || 0), 0);
+}
+
+/** Ținta pe interval: rămâne aceeași pentru rate, se înmulțește cu lunile pentru numărători. */
+export function kpiTargetRange(k: Kpi, months: string[]): number {
+  const t = Number(k.target) || 0;
+  return isRateKpi(k) ? t : t * Math.max(1, months.length);
+}
+
+export function kpiHasRange(S: CrmState, k: Kpi, months: string[]): boolean {
+  if (k.auto) return true;
+  return months.some((m) => (k.vals || {})[m] !== undefined);
+}
+
+export function kpiScoreRange(S: CrmState, k: Kpi, months: string[]): number {
+  const v = kpiValRange(S, k, months);
+  const t = kpiTargetRange(k, months);
+  if (!t || !kpiHasRange(S, k, months)) return 0;
+  if (k.dir === "down") return v <= 0 ? 100 : Math.max(0, Math.min(100, Math.round((t / v) * 100)));
+  return Math.max(0, Math.min(100, Math.round((v / t) * 100)));
+}
+
 export const memberTasks = (S: CrmState, id: string) => S.tasks.filter((t) => t.assignee === id);
 
 /** Membrul curent = cel al cărui email coincide cu contul logat (fallback: identitate de dispozitiv). */
@@ -114,7 +186,7 @@ export function myDeptIds(S: CrmState, me: string, authEmail: string): string[] 
 export function memberStats(
   S: CrmState,
   id: string,
-  kmonth: string,
+  months: string[],
   emonth: string,
 ): MemberStats {
   const ts = memberTasks(S, id);
@@ -142,7 +214,7 @@ export function memberStats(
 
   const ks = S.kpis.filter((k) => k.assignee === id);
   const kp = ks.length
-    ? Math.round(ks.reduce((a, k) => a + kpiScore(S, k, kmonth), 0) / ks.length)
+    ? Math.round(ks.reduce((a, k) => a + kpiScoreRange(S, k, months), 0) / ks.length)
     : null;
 
   const ev = S.evals.find((e) => e.member === id && e.month === emonth);
@@ -187,8 +259,8 @@ export function deptProgress(S: CrmState, id: string): number {
   return Math.round(ts.reduce((a, t) => a + taskProgress(t), 0) / ts.length);
 }
 
-export function deptKpi(S: CrmState, id: string, kmonth: string): number | null {
+export function deptKpi(S: CrmState, id: string, months: string[]): number | null {
   const ks = S.kpis.filter((k) => k.dept === id);
   if (!ks.length) return null;
-  return Math.round(ks.reduce((a, k) => a + kpiScore(S, k, kmonth), 0) / ks.length);
+  return Math.round(ks.reduce((a, k) => a + kpiScoreRange(S, k, months), 0) / ks.length);
 }

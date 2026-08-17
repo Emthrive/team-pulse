@@ -3,7 +3,7 @@
 //  ECHIPĂ (portat din viewTeam)
 // ============================================================
 import { useIsAdmin } from "@/lib/admin";
-import { currentMemberId, depName, memberDepts, memberStats } from "@/lib/calc";
+import { currentMemberId, depName, memberDepts, memberStats, monthsInRange } from "@/lib/calc";
 import { editMember, evalMember, newMember } from "@/lib/forms";
 import { inviteUser } from "@/lib/invite";
 import { useStore } from "@/lib/store";
@@ -18,7 +18,8 @@ export function Team() {
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
-  const kmonth = useStore((s) => s.kmonth);
+  const kstart = useStore((s) => s.kstart);
+  const kend = useStore((s) => s.kend);
   const emonth = useStore((s) => s.emonth);
   const setEMonth = useStore((s) => s.setEMonth);
   const setFlt = useStore((s) => s.setFlt);
@@ -30,7 +31,7 @@ export function Team() {
 
   const list = S.members
     .filter((m) => m.active)
-    .map((m) => ({ m, s: memberStats(S, m.id, kmonth, emonth) }))
+    .map((m) => ({ m, s: memberStats(S, m.id, monthsInRange(kstart, kend), emonth) }))
     .sort((a, b) => (b.s.total === null ? -1 : b.s.total) - (a.s.total === null ? -1 : a.s.total));
 
   return (

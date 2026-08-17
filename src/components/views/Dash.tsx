@@ -3,7 +3,7 @@
 //  PANOU (portat din viewDash + myBlock)
 // ============================================================
 import { onlyMine, toggleSub } from "@/lib/actions";
-import { currentMemberId, deptKpi, deptProgress, depName, isLate, mem, memberStats, taskProgress } from "@/lib/calc";
+import { currentMemberId, deptKpi, deptProgress, depName, isLate, mem, memberStats, monthsInRange, taskProgress } from "@/lib/calc";
 import { useStore } from "@/lib/store";
 import { daysLeft } from "@/lib/utils";
 import { TaskCard } from "../TaskCard";
@@ -13,7 +13,8 @@ function MyBlock() {
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
-  const kmonth = useStore((s) => s.kmonth);
+  const kstart = useStore((s) => s.kstart);
+  const kend = useStore((s) => s.kend);
   const emonth = useStore((s) => s.emonth);
 
   // Identitate automată din contul logat; dacă nu ai un membru asociat, blocul nu apare.
@@ -21,7 +22,7 @@ function MyBlock() {
   const meMember = myId ? mem(S, myId) : undefined;
   if (!meMember) return null;
 
-  const stt = memberStats(S, myId, kmonth, emonth);
+  const stt = memberStats(S, myId, monthsInRange(kstart, kend), emonth);
   const mine = S.tasks.filter((t) => t.assignee === myId && t.status !== "gata");
   const subs: { tid: string; sid: string; title: string; taskTitle: string; deadline: string }[] = [];
   S.tasks.forEach((t) =>
@@ -79,10 +80,12 @@ function MyBlock() {
 
 export function Dash() {
   const S = useStore((s) => s.S)!;
-  const kmonth = useStore((s) => s.kmonth);
+  const kstart = useStore((s) => s.kstart);
+  const kend = useStore((s) => s.kend);
   const emonth = useStore((s) => s.emonth);
   const setTab = useStore((s) => s.setTab);
   const setFlt = useStore((s) => s.setFlt);
+  const kmonths = monthsInRange(kstart, kend);
 
   const ts = S.tasks;
   const act = ts.filter((t) => t.status !== "gata");
@@ -98,7 +101,7 @@ export function Dash() {
 
   const board = S.members
     .filter((m) => m.active)
-    .map((m) => ({ m, s: memberStats(S, m.id, kmonth, emonth) }))
+    .map((m) => ({ m, s: memberStats(S, m.id, kmonths, emonth) }))
     .filter((x) => x.s.total !== null)
     .sort((a, b) => (b.s.total as number) - (a.s.total as number))
     .slice(0, 6);
@@ -145,7 +148,7 @@ export function Dash() {
       <div className="grid g3">
         {S.departments.map((d) => {
           const p = deptProgress(S, d.id);
-          const k = deptKpi(S, d.id, kmonth);
+          const k = deptKpi(S, d.id, kmonths);
           const n = S.tasks.filter((t) => t.dept === d.id && t.status !== "gata").length;
           const l = S.tasks.filter((t) => t.dept === d.id && isLate(t)).length;
           return (

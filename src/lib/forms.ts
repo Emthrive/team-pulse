@@ -18,18 +18,53 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
 
 // ---------------------------------------------------------------- TASKURI
 /** Tipuri de livrabile — devin etichete și leagă taskul de KPI-urile auto cu filtru de tag. */
-const TASK_TYPES = ["Bug", "Feature", "Postare", "Video", "Propunere"];
+const TASK_TYPES = ["Bug", "Feature", "Postare", "Video", "Campanie", "Propunere"];
+/** Gruparea tipurilor pe departamente, pentru delimitare clară în dropdown. */
+const TASK_TYPE_OPTIONS: { v: string; l: string; g?: string }[] = [
+  { v: "", l: "fără" },
+  { v: "Bug", l: "Bug", g: "IT & App" },
+  { v: "Feature", l: "Feature", g: "IT & App" },
+  { v: "Postare", l: "Postare", g: "Marketing" },
+  { v: "Video", l: "Video", g: "Marketing" },
+  { v: "Campanie", l: "Campanie", g: "Marketing" },
+  { v: "Propunere", l: "Propunere", g: "Parteneriate" },
+];
 const isType = (g: string) => TASK_TYPES.some((t) => t.toLowerCase() === g.trim().toLowerCase());
 const findType = (tags: string[]) => tags.find((g) => isType(g)) || "";
-/** Combină etichetele libere cu tipul ales (tipul e mereu primul, fără dubluri). */
-function mergeTags(raw: string, ttype: string): string[] {
-  const free = raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .filter((g) => !isType(g));
-  if (ttype) free.unshift(ttype);
-  return free;
+/** Combină tipul ales + etichetele existente bifate + cele noi; dedup case-insensitive. */
+function mergeTags(raw: string, ttype: string, extags = ""): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const push = (g: string) => {
+    const v = g.trim();
+    if (!v) return;
+    const key = v.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(v);
+  };
+  if (ttype) push(ttype);
+  extags.split(",").forEach((g) => {
+    if (!isType(g)) push(g);
+  });
+  raw.split(",").forEach((g) => {
+    if (!isType(g)) push(g);
+  });
+  return out;
+}
+
+/** Etichetele deja folosite în taskuri (fără tipurile de livrabil), unice case-insensitive. */
+function existingTags(S: CrmState): string[] {
+  const map = new Map<string, string>();
+  S.tasks.forEach((t) =>
+    (t.tags || []).forEach((g) => {
+      const v = g.trim();
+      if (!v || isType(v)) return;
+      const key = v.toLowerCase();
+      if (!map.has(key)) map.set(key, v);
+    }),
+  );
+  return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
 }
 
 interface TaskFieldOpts {
@@ -88,13 +123,25 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     label: "Tip livrabil (se leagă automat de KPI)",
     type: "select",
     value: t ? findType(t.tags || []) : "",
-    options: [{ v: "", l: "fără" }].concat(TASK_TYPES.map((x) => ({ v: x, l: x }))),
+    options: TASK_TYPE_OPTIONS,
   });
+  // Refolosirea etichetelor existente (evită dubluri gen „Emthrive” / „Emthrive.com”):
+  // bifezi din listă; câmpul text e doar pentru etichete complet noi.
+  const known = existingTags(S);
+  if (known.length) {
+    fields.push({
+      key: "extags",
+      label: "Etichete existente (bifează pentru a refolosi)",
+      type: "checks",
+      value: t ? (t.tags || []).filter((g) => !isType(g)).join(",") : "",
+      options: known.map((g) => ({ v: g, l: "#" + g })),
+    });
+  }
   fields.push({
     key: "tags",
-    label: "Alte etichete (separate prin virgulă)",
-    value: t ? (t.tags || []).filter((g) => !isType(g)).join(", ") : "",
-    ph: "SuccesPlus, Theona, Emthrive",
+    label: "Etichete noi (doar dacă nu există în listă)",
+    value: "",
+    ph: "ex: CampanieBTS",
   });
   fields.push({
     key: "recurring",
@@ -152,7 +199,7 @@ export function newTask() {
         priority: d.priority as Task["priority"],
         status: "todo", // mereu „De făcut" la creare
         progress: 0,
-        tags: mergeTags(d.tags, d.ttype || ""),
+        tags: mergeTags(d.tags, d.ttype || "", d.extags || ""),
         notes: d.notes,
         subtasks: [],
         recurring: (d.recurring || "") as Task["recurring"],
@@ -193,7 +240,7 @@ export function editTask(id: string) {
       tk.status = d.status as Task["status"];
       // Progresul manual se actualizează doar dacă câmpul a fost prezent (task fără subtaskuri).
       if (d.progress !== undefined) tk.progress = Number(d.progress) || 0;
-      tk.tags = mergeTags(d.tags, d.ttype || "");
+      tk.tags = mergeTags(d.tags, d.ttype || "", d.extags || "");
       tk.notes = d.notes;
       tk.recurring = (d.recurring || "") as Task["recurring"];
     },
