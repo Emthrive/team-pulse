@@ -47,7 +47,7 @@ export function Login({ finishing }: { finishing?: boolean }) {
             <div className="htitle">
               Team<span className="brand-pulse">Pulse</span>
             </div>
-            <div className="hsub">powered by Emthrive</div>
+            <div className="hsub" style={{ marginTop: 7 }}>powered by Emthrive</div>
           </div>
         </div>
 

@@ -34,7 +34,7 @@ const NAV: { id: TabId; n: string; Icon: LucideIcon }[] = [
 const syncTxt: Record<string, string> = { ok: "salvat", wait: "salvez…", err: "doar local" };
 
 export function Sidebar() {
-  const S = useStore((s) => s.S)!;
+  const S = useStore((s) => s.S);
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
   const tab = useStore((s) => s.tab);
@@ -48,9 +48,11 @@ export function Sidebar() {
   const nav = admin ? NAV : NAV.filter((n) => n.id !== "set");
 
   // Identitatea afișată: membrul ales manual > membrul cu emailul contului logat > emailul contului.
-  const meMember =
-    (me ? mem(S, me) : undefined) ||
-    (authEmail ? S.members.find((m) => (m.email || "").toLowerCase() === authEmail) : undefined);
+  // S poate fi încă null cât timp se încarcă datele din Firestore — nu accesăm nimic pe null.
+  const meMember = S
+    ? (me ? mem(S, me) : undefined) ||
+      (authEmail ? S.members.find((m) => (m.email || "").toLowerCase() === authEmail) : undefined)
+    : undefined;
 
   const identityName = meMember ? meMember.n : authEmail || "Cine sunt?";
   const identitySub = meMember && authEmail ? authEmail : null;
