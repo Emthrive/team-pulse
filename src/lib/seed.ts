@@ -80,5 +80,18 @@ export function migrate(S: CrmState): boolean {
     S.evals = [];
     changed = true;
   }
+  // „Data de acoperire" a fost unificată cu deadline-ul: mutăm valorile vechi.
+  (S.tasks || []).forEach((t) => {
+    const legacy = t as { coverDate?: string; coverLabel?: string };
+    if (legacy.coverDate) {
+      if (!t.deadline) t.deadline = legacy.coverDate;
+      delete legacy.coverDate;
+      changed = true;
+    }
+    if (legacy.coverLabel !== undefined) {
+      delete legacy.coverLabel;
+      changed = true;
+    }
+  });
   return changed;
 }

@@ -55,7 +55,11 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
   // Status și progres doar la editare — la creare taskul e mereu „De făcut" / progres 0.
   if (!forNew) {
     fields.push({ key: "status", label: "Status", type: "select", value: t ? t.status : "todo", options: STATUS.map((s) => ({ v: s.id, l: s.n })) });
-    fields.push({ key: "progress", label: "Progres manual (dacă nu are subtaskuri)", type: "range", value: t ? t.progress || 0 : 0 });
+    // Progres manual doar dacă taskul NU are subtaskuri — altfel progresul se ia din subtaskuri.
+    const hasSubtasks = !!(t && t.subtasks && t.subtasks.length);
+    if (!hasSubtasks) {
+      fields.push({ key: "progress", label: "Progres manual", type: "range", value: t ? t.progress || 0 : 0 });
+    }
   }
 
   fields.push({ key: "tags", label: "Etichete (separate prin virgulă)", value: t ? (t.tags || []).join(", ") : "", ph: "SuccesPlus, Theona, Emthrive" });
@@ -70,7 +74,6 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
       { v: "lunar", l: "Lunar" },
     ],
   });
-  fields.push({ key: "coverDate", label: "Data de acoperire", type: "date", value: t ? t.coverDate || "" : "" });
   fields.push({ key: "notes", label: "Note", type: "textarea", value: t ? t.notes : "" });
   return fields;
 }
@@ -120,8 +123,6 @@ export function newTask() {
         notes: d.notes,
         subtasks: [],
         recurring: (d.recurring || "") as Task["recurring"],
-        coverLabel: "",
-        coverDate: d.coverDate || "",
         createdAt: todayISO(),
         completedAt: "",
       };
@@ -154,31 +155,14 @@ export function editTask(id: string) {
       if (d.status === "gata" && tk.status !== "gata") tk.completedAt = todayISO();
       if (d.status !== "gata") tk.completedAt = "";
       tk.status = d.status as Task["status"];
-      tk.progress = Number(d.progress) || 0;
+      // Progresul manual se actualizează doar dacă câmpul a fost prezent (task fără subtaskuri).
+      if (d.progress !== undefined) tk.progress = Number(d.progress) || 0;
       tk.tags = d.tags.split(",").map((s) => s.trim()).filter(Boolean);
       tk.notes = d.notes;
       tk.recurring = (d.recurring || "") as Task["recurring"];
-      tk.coverDate = d.coverDate || "";
     },
     onDelete: (draft) => {
       draft.tasks = draft.tasks.filter((x) => x.id !== id);
-    },
-  });
-}
-
-export function setCover(id: string) {
-  const { S, openForm } = st();
-  if (!S) return;
-  const t = S.tasks.find((x) => x.id === id);
-  if (!t) return;
-  openForm({
-    title: "Data de acoperire",
-    note: "Până la ce dată este acoperit/realizat acest task.",
-    fields: [{ key: "coverDate", label: "Dată", type: "date", value: t.coverDate || "" }],
-    onSubmit: (d, draft) => {
-      const tk = draft.tasks.find((x) => x.id === id);
-      if (!tk) return;
-      tk.coverDate = d.coverDate;
     },
   });
 }

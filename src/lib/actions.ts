@@ -62,7 +62,6 @@ export function renew(id: string) {
       else x.setDate(x.getDate() + 7);
       return x.toISOString().slice(0, 10);
     };
-    if (t.deadline) t.coverDate = t.deadline;
     t.deadline = shift(t.deadline);
     (t.subtasks || []).forEach((x) => {
       x.done = false;

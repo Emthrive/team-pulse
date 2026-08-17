@@ -7,7 +7,7 @@ import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
 import { currentMemberId, depName, isLate, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
-import { editSub, editTask, setCover } from "@/lib/forms";
+import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
@@ -55,14 +55,9 @@ export function TaskCard({ task }: { task: Task }) {
             <span className={`chip ${stCls(t.status)}`}>{stName(t.status)}</span>
             <span className={`chip ${prCls(t.priority)}`}>{prName(t.priority)}</span>
             <span className="chip">{depName(S, t.dept)}</span>
-            <span className={`chip ${late ? "red" : ""}`}>{dlTxt}</span>
+            {t.deadline && <span className="chip red">{dlTxt}</span>}
             {t.recurring && (
               <span className="chip gold">{t.recurring === "lunar" ? "lunar" : "săptămânal"}</span>
-            )}
-            {t.coverDate && (
-              <span className="chip gold">
-                {t.coverLabel || "Acoperit până la"}: {fmtDate(t.coverDate)}
-              </span>
             )}
             {(t.tags || []).map((g) => (
               <span className="chip turq" key={g}>
@@ -152,9 +147,6 @@ export function TaskCard({ task }: { task: Task }) {
                 Redeschid
               </button>
             )}
-            <button className="btn ghost sm" onClick={() => setCover(t.id)}>
-              Data de acoperire
-            </button>
             {t.recurring && (
               <button className="btn ghost sm" onClick={() => renew(t.id)}>
                 Reînnoiesc ciclul

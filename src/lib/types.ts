@@ -47,8 +47,6 @@ export interface Task {
   tags: string[];
   notes: string;
   recurring: Recurring;
-  coverLabel?: string;
-  coverDate?: string;
   subtasks: Subtask[];
   createdAt: string;
   completedAt: string;
