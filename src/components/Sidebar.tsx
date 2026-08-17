@@ -16,9 +16,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useIsAdmin } from "@/lib/admin";
-import { mem } from "@/lib/calc";
+import { currentMemberId, mem } from "@/lib/calc";
 import { firebaseReady, getAuthClient } from "@/lib/firebase";
-import { whoAmI } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import type { TabId } from "@/lib/types";
 import { LogoMark, Wordmark } from "./Brand";
@@ -47,14 +46,11 @@ export function Sidebar() {
   // Utilizatorul normal nu vede Setări.
   const nav = admin ? NAV : NAV.filter((n) => n.id !== "set");
 
-  // Identitatea afișată: membrul ales manual > membrul cu emailul contului logat > emailul contului.
+  // Identitatea e automată: membrul al cărui email coincide cu contul logat.
   // S poate fi încă null cât timp se încarcă datele din Firestore — nu accesăm nimic pe null.
-  const meMember = S
-    ? (me ? mem(S, me) : undefined) ||
-      (authEmail ? S.members.find((m) => (m.email || "").toLowerCase() === authEmail) : undefined)
-    : undefined;
+  const meMember = S ? mem(S, currentMemberId(S, me, authEmail)) : undefined;
 
-  const identityName = meMember ? meMember.n : authEmail || "Cine sunt?";
+  const identityName = meMember ? meMember.n : authEmail || "cont local";
   const identitySub = meMember && authEmail ? authEmail : null;
 
   return (
@@ -93,11 +89,7 @@ export function Sidebar() {
       </nav>
 
       <div className="side-foot">
-        <button
-          className="foot-id"
-          onClick={() => whoAmI()}
-          title={identitySub || identityName}
-        >
+        <div className="foot-id" title={identitySub || identityName}>
           <span className="foot-ic">
             <UserRound size={18} strokeWidth={2.2} />
           </span>
@@ -111,7 +103,7 @@ export function Sidebar() {
               </span>
             </span>
           )}
-        </button>
+        </div>
         {firebaseReady && (
           <button
             className="foot-out"

@@ -4,14 +4,12 @@
 // ============================================================
 import { exportCsv, exportJson, importJson, resetAll } from "@/lib/actions";
 import { memName } from "@/lib/calc";
-import { editDept, editWeights, joinTeam, newDept, whoAmI } from "@/lib/forms";
+import { editDept, editWeights, newDept } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 
 export function Settings() {
   const S = useStore((s) => s.S)!;
-  const me = useStore((s) => s.me);
   const W = S.weights;
-  const meMember = me ? S.members.find((m) => m.id === me) : undefined;
 
   return (
     <>
@@ -38,26 +36,6 @@ export function Settings() {
             </button>
           </div>
         ))}
-      </div>
-
-      <div className="sec">
-        <h2>Identitatea mea</h2>
-        <span className="rule" />
-      </div>
-      <div className="card">
-        <div className="mini" style={{ marginBottom: 10 }}>
-          {meMember
-            ? "Pe acest dispozitiv eşti " + meMember.n + "."
-            : "Nu ai spus încă cine eşti pe acest dispozitiv."}
-        </div>
-        <div className="row">
-          <button className="btn ghost sm" onClick={() => whoAmI()}>
-            Schimb persoana
-          </button>
-          <button className="btn ghost sm" onClick={() => joinTeam()}>
-            Mă adaug în echipă
-          </button>
-        </div>
       </div>
 
       <div className="sec">

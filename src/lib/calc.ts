@@ -44,6 +44,15 @@ export function kpiScore(k: Kpi, mth: string): number {
 
 export const memberTasks = (S: CrmState, id: string) => S.tasks.filter((t) => t.assignee === id);
 
+/** Membrul curent = cel al cărui email coincide cu contul logat (fallback: identitate de dispozitiv). */
+export function currentMemberId(S: CrmState, me: string, authEmail: string): string {
+  if (authEmail) {
+    const m = S.members.find((x) => (x.email || "").toLowerCase() === authEmail.toLowerCase());
+    if (m) return m.id;
+  }
+  return me || "";
+}
+
 export function memberStats(
   S: CrmState,
   id: string,

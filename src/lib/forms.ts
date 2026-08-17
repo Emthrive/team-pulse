@@ -4,8 +4,8 @@
 //  Fiecare re-găsește entitatea după id în onSubmit/onDelete,
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
-import { isAdminEmail } from "./admin";
 import { CRIT, PRIO, STATUS } from "./constants";
+import { inviteUser } from "./invite";
 import type { CrmState, Member, Task } from "./types";
 import { todayISO, uid } from "./utils";
 import { useStore, type FormField } from "./store";
@@ -226,9 +226,9 @@ export function editKpi(id: string) {
 // ---------------------------------------------------------------- MEMBRI
 function memberFields(S: CrmState, m: Member | null): FormField[] {
   return [
-    { key: "n", label: "Nume", value: m ? m.n : "" },
-    { key: "email", label: "Email de acces (whitelist login)", type: "text", value: m ? m.email || "" : "", ph: "ex: prenume@emthrive.com" },
-    { key: "role", label: "Rol", value: m ? m.role : "", ph: "ex: Consilier vocaţional" },
+    { key: "n", label: "Nume şi prenume", value: m ? m.n : "" },
+    { key: "email", label: "Email de acces (primeşte link de login)", type: "text", value: m ? m.email || "" : "", ph: "ex: prenume@emthrive.com" },
+    { key: "role", label: "Poziţie", value: m ? m.role : "", ph: "ex: Programator, Consilier vocaţional" },
     { key: "dept", label: "Departament", type: "select", value: m ? m.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
     {
       key: "active",
@@ -251,14 +251,22 @@ export function newMember() {
     fields: memberFields(S, null),
     onSubmit: (d, draft) => {
       if (!d.n.trim()) return;
+      const email = d.email.trim().toLowerCase();
       draft.members.push({
         id: uid(),
         n: d.n.trim(),
         role: d.role,
         dept: d.dept,
         active: d.active === "1",
-        email: d.email.trim().toLowerCase(),
+        email,
       });
+      // Trimitem automat link-ul de acces (fire-and-forget).
+      if (email) {
+        inviteUser(email).then((r) => {
+          if (r.ok) alert("Persoană adăugată. Link de acces trimis către " + email + ".");
+          else alert("Persoană adăugată, dar link-ul de acces nu a putut fi trimis: " + r.error);
+        });
+      }
     },
   });
 }
@@ -331,65 +339,6 @@ export function evalMember(id: string) {
           draft.evals = draft.evals.filter((e) => e.id !== ev.id);
         }
       : null,
-  });
-}
-
-// ---------------------------------------------------------------- IDENTITATE
-export function whoAmI() {
-  const { S, me, authEmail, openForm, setMe } = st();
-  if (!S) return;
-  const canSelfAdd = isAdminEmail(authEmail);
-  const opts = [{ v: "", l: "— nesetat —" }].concat(
-    S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })),
-  );
-  if (canSelfAdd) opts.push({ v: "__new", l: "+ nu sunt în listă, mă adaug" });
-  openForm({
-    title: "Cine sunt?",
-    note: "Alegerea se salvează doar pe dispozitivul tău. Nu schimbă nimic pentru ceilalţi.",
-    fields: [
-      {
-        key: "id",
-        label: "Eu sunt",
-        type: "select",
-        value: me,
-        options: opts,
-      },
-    ],
-    onSubmit: (d) => {
-      if (d.id === "__new") {
-        joinTeam();
-        return;
-      }
-      setMe(d.id);
-    },
-  });
-}
-
-export function joinTeam() {
-  const { S, openForm, setMe } = st();
-  if (!S) return;
-  openForm({
-    title: "Mă adaug în echipă",
-    note: "Completează cum vrei să apari în CRM. Coordonatorul poate ajusta ulterior.",
-    fields: [
-      { key: "n", label: "Nume şi prenume", value: "", ph: "ex: Alex Chiriac" },
-      { key: "role", label: "Ce faci în echipă", value: "", ph: "ex: editare video, 7 postări/săptămână" },
-      { key: "dept", label: "Departament", type: "select", value: "mkt", options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
-    ],
-    onSubmit: (d, draft) => {
-      if (!d.n.trim()) return;
-      const ex = draft.members.find((m) => m.n.toLowerCase() === d.n.trim().toLowerCase());
-      if (ex) {
-        ex.role = d.role || ex.role;
-        ex.dept = d.dept;
-        ex.active = true;
-        setMe(ex.id);
-        return;
-      }
-      const m = { id: uid(), n: d.n.trim(), role: d.role, dept: d.dept, active: true };
-      draft.members.push(m);
-      setMe(m.id);
-    },
   });
 }
 

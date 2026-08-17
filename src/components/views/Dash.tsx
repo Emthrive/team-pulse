@@ -3,9 +3,7 @@
 //  PANOU (portat din viewDash + myBlock)
 // ============================================================
 import { onlyMine } from "@/lib/actions";
-import { useIsAdmin } from "@/lib/admin";
-import { deptKpi, deptProgress, depName, isLate, mem, memberStats, taskProgress } from "@/lib/calc";
-import { joinTeam } from "@/lib/forms";
+import { currentMemberId, deptKpi, deptProgress, depName, isLate, mem, memberStats, taskProgress } from "@/lib/calc";
 import { useStore } from "@/lib/store";
 import { daysLeft } from "@/lib/utils";
 import { TaskCard } from "../TaskCard";
@@ -14,38 +12,22 @@ import { Avatar, Bar, Ring } from "../ui/primitives";
 function MyBlock() {
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
+  const authEmail = useStore((s) => s.authEmail);
   const kmonth = useStore((s) => s.kmonth);
   const emonth = useStore((s) => s.emonth);
   const toggleSubAction = useStore((s) => s.mutate);
 
-  const admin = useIsAdmin();
-  const meMember = me ? mem(S, me) : undefined;
-  if (!me || !meMember) {
-    // Doar adminul poate adăuga persoane; userul normal e adăugat de admin.
-    if (!admin) return null;
-    return (
-      <div className="card" style={{ marginTop: 10, borderColor: "rgba(212,175,55,.35)" }}>
-        <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4 style={{ fontSize: 14.5 }}>Spune-mi cine eşti</h4>
-            <div className="mini">
-              Te adaugi în echipă o singură dată şi apoi îţi vezi doar taskurile tale.
-            </div>
-          </div>
-          <button className="btn gold sm" onClick={() => joinTeam()}>
-            Mă adaug în echipă
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Identitate automată din contul logat; dacă nu ai un membru asociat, blocul nu apare.
+  const myId = currentMemberId(S, me, authEmail);
+  const meMember = myId ? mem(S, myId) : undefined;
+  if (!meMember) return null;
 
-  const stt = memberStats(S, me, kmonth, emonth);
-  const mine = S.tasks.filter((t) => t.assignee === me && t.status !== "gata");
+  const stt = memberStats(S, myId, kmonth, emonth);
+  const mine = S.tasks.filter((t) => t.assignee === myId && t.status !== "gata");
   const subs: { tid: string; sid: string; title: string; taskTitle: string; deadline: string }[] = [];
   S.tasks.forEach((t) =>
     (t.subtasks || []).forEach((x) => {
-      if (x.assignee === me && !x.done)
+      if (x.assignee === myId && !x.done)
         subs.push({ tid: t.id, sid: x.id, title: x.title, taskTitle: t.title, deadline: x.deadline });
     }),
   );

@@ -6,6 +6,7 @@ import { isSignInWithEmailLink, onAuthStateChanged, signInWithEmailLink, type Us
 import { useEffect, useState } from "react";
 import { firebaseReady, getAuthClient } from "./firebase";
 import { useStore } from "./store";
+import { recordUserLogin } from "./users";
 
 const EMAIL_KEY = "emthrive_signin_email";
 
@@ -67,6 +68,7 @@ export function useAuth(): AuthState {
     const unsub = onAuthStateChanged(auth, (user) => {
       setState((s) => ({ ...s, ready: true, user, finishing: false }));
       useStore.getState().setAuthEmail(user?.email || "");
+      if (user) recordUserLogin(user);
     });
     return unsub;
   }, []);

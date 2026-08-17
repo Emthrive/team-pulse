@@ -2,16 +2,22 @@
 // ============================================================
 //  ECHIPĂ (portat din viewTeam)
 // ============================================================
-import { claim } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
-import { depName, memberStats } from "@/lib/calc";
-import { editMember, evalMember, joinTeam, newMember, whoAmI } from "@/lib/forms";
+import { currentMemberId, depName, memberStats } from "@/lib/calc";
+import { editMember, evalMember, newMember } from "@/lib/forms";
+import { inviteUser } from "@/lib/invite";
 import { useStore } from "@/lib/store";
+
+async function sendLink(email: string) {
+  const r = await inviteUser(email);
+  alert(r.ok ? "Link de acces trimis către " + email + "." : "Nu s-a putut trimite: " + r.error);
+}
 import { Avatar, Bar, MonthPicker, Ring } from "../ui/primitives";
 
 export function Team() {
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
+  const authEmail = useStore((s) => s.authEmail);
   const kmonth = useStore((s) => s.kmonth);
   const emonth = useStore((s) => s.emonth);
   const setEMonth = useStore((s) => s.setEMonth);
@@ -20,7 +26,7 @@ export function Team() {
   const admin = useIsAdmin();
 
   const W = S.weights;
-  const meMember = me ? S.members.find((m) => m.id === me) : undefined;
+  const myId = currentMemberId(S, me, authEmail);
 
   const list = S.members
     .filter((m) => m.active)
@@ -40,26 +46,6 @@ export function Team() {
         )}
       </div>
 
-      {admin && (
-        <div className="card" style={{ marginTop: 12, borderColor: "rgba(212,175,55,.35)" }}>
-          <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h4 style={{ fontSize: 14.5 }}>
-                {meMember ? "Eşti în echipă ca " + meMember.n : "Lucrezi în echipa Emthrive?"}
-              </h4>
-              <div className="mini">
-                {meMember
-                  ? "Taskurile tale apar primele în Panou."
-                  : "Adaugă-te singur, spune ce faci şi îţi apar taskurile tale în Panou."}
-              </div>
-            </div>
-            <button className="btn gold sm" onClick={() => (meMember ? whoAmI() : joinTeam())}>
-              {meMember ? "Schimb" : "Mă adaug în echipă"}
-            </button>
-          </div>
-        </div>
-      )}
-
       <p className="mini" style={{ margin: "10px 0 0" }}>
         Scor final = {W.exec}% execuţie taskuri + {W.kpi}% realizare KPI + {W.eval}% evaluare
         calitativă. Ponderile se schimbă în Setări.
@@ -74,7 +60,7 @@ export function Team() {
                 <Avatar name={m.n} lg />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h4 style={{ fontSize: 15 }}>
-                    {m.n} {m.id === me && <span className="chip gold">eu</span>}
+                    {m.n} {m.id === myId && <span className="chip gold">eu</span>}
                   </h4>
                   <div className="mini">{m.role || ""}</div>
                   <div className="mini">
@@ -126,9 +112,9 @@ export function Team() {
                 >
                   Taskuri
                 </button>
-                {m.id !== me && (
-                  <button className="btn ghost sm" onClick={() => claim(m.id)}>
-                    Sunt eu
+                {admin && m.email && (
+                  <button className="btn ghost sm" onClick={() => sendLink(m.email!)}>
+                    Trimite link
                   </button>
                 )}
                 {admin && (

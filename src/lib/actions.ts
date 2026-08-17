@@ -2,7 +2,7 @@
 // ============================================================
 //  ACȚIUNI DIRECTE (fără formular) — portate din original
 // ============================================================
-import { depName, memName, taskProgress } from "./calc";
+import { currentMemberId, depName, memName, taskProgress } from "./calc";
 import { prName, stName } from "./constants";
 import { seed } from "./seed";
 import { useStore } from "./store";
@@ -96,13 +96,10 @@ export function setKpiVal(id: string, v: string) {
   });
 }
 
-export function claim(id: string) {
-  st().setMe(id);
-}
-
 export function onlyMine() {
-  const { me } = st();
-  st().setFlt({ dept: "", member: me, status: "", only: "" });
+  const { S, me, authEmail } = st();
+  const id = S ? currentMemberId(S, me, authEmail) : me;
+  st().setFlt({ dept: "", member: id, status: "", only: "" });
 }
 
 // ---------------------------------------------------------------- date / export
