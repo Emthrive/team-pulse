@@ -37,3 +37,18 @@ export const initials = (n: string) =>
 
 /** clamp la [0,100] și rotunjire, pentru procente de progres */
 export const pct = (v: number) => Math.max(0, Math.min(100, Math.round(v || 0)));
+
+/** Ultimele n luni (inclusiv `end`, format YYYY-MM), calculate aritmetic — fără fus orar. */
+export function lastMonths(end: string, n: number): string[] {
+  let [y, m] = end.split("-").map(Number);
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    out.unshift(y + "-" + String(m).padStart(2, "0"));
+    m--;
+    if (m === 0) {
+      m = 12;
+      y--;
+    }
+  }
+  return out;
+}

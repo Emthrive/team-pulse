@@ -28,16 +28,61 @@ export function isLate(t: Task): boolean {
   return t.deadline < todayISO();
 }
 
-export function kpiVal(k: Kpi, mth: string): number {
+/** Valoarea calculată automat din taskuri pentru un KPI cu sursă auto. */
+export function kpiAutoVal(S: CrmState, k: Kpi, mth: string): number {
+  const tag = (k.tag || "").trim().toLowerCase();
+  // Scoping pe departament + filtru opțional de etichetă.
+  const base = S.tasks.filter(
+    (t) =>
+      t.dept === k.dept &&
+      (!tag || (t.tags || []).some((g) => g.trim().toLowerCase() === tag)),
+  );
+  // Dacă KPI-ul are responsabil, numărăm doar taskurile lui.
+  const scoped = k.assignee ? base.filter((t) => t.assignee === k.assignee) : base;
+
+  switch (k.auto) {
+    case "tasks_done":
+      return scoped.reduce(
+        (a, t) => a + (t.completions || []).filter((c) => c.d.slice(0, 7) === mth).length,
+        0,
+      );
+    case "on_time_rate": {
+      const comps = scoped.flatMap((t) =>
+        (t.completions || []).filter((c) => c.d.slice(0, 7) === mth),
+      );
+      if (!comps.length) return 0;
+      return Math.round((comps.filter((c) => c.onTime).length / comps.length) * 100);
+    }
+    case "subtasks_done": {
+      // Subtaskurile se filtrează pe responsabilul lor, nu al taskului-părinte.
+      let n = 0;
+      base.forEach((t) =>
+        (t.subtasks || []).forEach((s) => {
+          if (k.assignee && s.assignee !== k.assignee) return;
+          if (s.done && s.doneAt && s.doneAt.slice(0, 7) === mth) n++;
+        }),
+      );
+      return n;
+    }
+    case "tasks_created":
+      return scoped.filter((t) => (t.createdAt || "").slice(0, 7) === mth).length;
+    default:
+      return 0;
+  }
+}
+
+export function kpiVal(S: CrmState, k: Kpi, mth: string): number {
+  if (k.auto) return kpiAutoVal(S, k, mth);
   return Number((k.vals || {})[mth] || 0);
 }
-export function kpiHas(k: Kpi, mth: string): boolean {
+export function kpiHas(S: CrmState, k: Kpi, mth: string): boolean {
+  if (k.auto) return true;
   return (k.vals || {})[mth] !== undefined;
 }
-export function kpiScore(k: Kpi, mth: string): number {
-  const v = kpiVal(k, mth);
+export function kpiScore(S: CrmState, k: Kpi, mth: string): number {
+  const v = kpiVal(S, k, mth);
   const t = Number(k.target) || 0;
-  if (!t || !kpiHas(k, mth)) return 0;
+  if (!t || !kpiHas(S, k, mth)) return 0;
   if (k.dir === "down") return v <= 0 ? 100 : Math.max(0, Math.min(100, Math.round((t / v) * 100)));
   return Math.max(0, Math.min(100, Math.round((v / t) * 100)));
 }
@@ -84,7 +129,7 @@ export function memberStats(
 
   const ks = S.kpis.filter((k) => k.assignee === id);
   const kp = ks.length
-    ? Math.round(ks.reduce((a, k) => a + kpiScore(k, kmonth), 0) / ks.length)
+    ? Math.round(ks.reduce((a, k) => a + kpiScore(S, k, kmonth), 0) / ks.length)
     : null;
 
   const ev = S.evals.find((e) => e.member === id && e.month === emonth);
@@ -132,5 +177,5 @@ export function deptProgress(S: CrmState, id: string): number {
 export function deptKpi(S: CrmState, id: string, kmonth: string): number | null {
   const ks = S.kpis.filter((k) => k.dept === id);
   if (!ks.length) return null;
-  return Math.round(ks.reduce((a, k) => a + kpiScore(k, kmonth), 0) / ks.length);
+  return Math.round(ks.reduce((a, k) => a + kpiScore(S, k, kmonth), 0) / ks.length);
 }

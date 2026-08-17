@@ -8,7 +8,7 @@ import { isAdminEmail } from "./admin";
 import { currentMemberId } from "./calc";
 import { CRIT, PRIO, STATUS } from "./constants";
 import { inviteUser } from "./invite";
-import type { CrmState, Member, Task } from "./types";
+import type { CrmState, KpiAuto, Member, Task } from "./types";
 import { todayISO, uid } from "./utils";
 import { useStore, type FormField } from "./store";
 
@@ -199,6 +199,20 @@ export function editSub(tid: string, sid: string) {
 function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[] {
   return [
     { key: "n", label: "Denumire KPI", value: k ? k.n : "", ph: "ex: Sesiuni 1:1 vândute" },
+    {
+      key: "auto",
+      label: "Sursă valoare",
+      type: "select",
+      value: k ? k.auto || "" : "",
+      options: [
+        { v: "", l: "Manual (introduci valoarea lunar)" },
+        { v: "tasks_done", l: "Auto · taskuri finalizate în lună" },
+        { v: "on_time_rate", l: "Auto · % finalizate la termen" },
+        { v: "subtasks_done", l: "Auto · subtaskuri bifate în lună" },
+        { v: "tasks_created", l: "Auto · taskuri create în lună" },
+      ],
+    },
+    { key: "tag", label: "Filtru etichetă (opţional, doar la auto)", value: k ? k.tag || "" : "", ph: "ex: Video" },
     { key: "dept", label: "Departament", type: "select", value: k ? k.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
     { key: "assignee", label: "Responsabil", type: "select", value: k ? k.assignee : "", options: memberOpts(S, [{ v: "", l: "la nivel de departament" }]) },
     { key: "target", label: "Ţintă lunară", type: "number", value: k ? k.target : 0, step: "any" },
@@ -224,7 +238,18 @@ export function newKpi() {
     fields: kpiFields(S, null),
     onSubmit: (d, draft) => {
       if (!d.n.trim()) return;
-      draft.kpis.push({ id: uid(), n: d.n.trim(), dept: d.dept, assignee: d.assignee, target: Number(d.target) || 0, unit: d.unit, dir: d.dir as "up" | "down", vals: {} });
+      draft.kpis.push({
+        id: uid(),
+        n: d.n.trim(),
+        dept: d.dept,
+        assignee: d.assignee,
+        target: Number(d.target) || 0,
+        unit: d.unit,
+        dir: d.dir as "up" | "down",
+        vals: {},
+        auto: (d.auto || "") as KpiAuto,
+        tag: (d.tag || "").trim(),
+      });
     },
   });
 }
@@ -246,6 +271,8 @@ export function editKpi(id: string) {
       kk.target = Number(d.target) || 0;
       kk.unit = d.unit;
       kk.dir = d.dir as "up" | "down";
+      kk.auto = (d.auto || "") as KpiAuto;
+      kk.tag = (d.tag || "").trim();
     },
     onDelete: (draft) => {
       draft.kpis = draft.kpis.filter((x) => x.id !== id);

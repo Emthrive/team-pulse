@@ -80,6 +80,27 @@ export function migrate(S: CrmState): boolean {
     S.evals = [];
     changed = true;
   }
+  // v3: KPI automat „Taskuri finalizate” per departament — legat de taskuri, fără +/−.
+  if ((S.version || 2) < 3) {
+    S.departments.forEach((d) => {
+      if (!S.kpis.some((k) => k.dept === d.id && k.auto === "tasks_done" && !(k.tag || "")))
+        S.kpis.push({
+          id: uid(),
+          n: "Taskuri finalizate",
+          dept: d.id,
+          assignee: "",
+          target: 10,
+          unit: "buc",
+          dir: "up",
+          vals: {},
+          auto: "tasks_done",
+          tag: "",
+        });
+    });
+    S.version = 3;
+    changed = true;
+  }
+
   // „Data de acoperire" a fost unificată cu deadline-ul: mutăm valorile vechi.
   (S.tasks || []).forEach((t) => {
     const legacy = t as { coverDate?: string; coverLabel?: string };

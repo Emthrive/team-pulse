@@ -66,6 +66,9 @@ export function Team() {
                   <div className="mini">
                     {depName(S, m.dept)}
                     {m.email ? " · " + m.email : " · fără email"}
+                    {m.activatedAt && (
+                      <span style={{ color: "var(--color-green)" }}> · activ</span>
+                    )}
                   </div>
                 </div>
                 <Ring pct={s.total === null ? 0 : s.total} />
@@ -112,7 +115,7 @@ export function Team() {
                 >
                   Taskuri
                 </button>
-                {admin && m.email && (
+                {admin && m.email && !m.activatedAt && (
                   <button className="btn ghost sm" onClick={() => sendLink(m.email!)}>
                     Trimite link
                   </button>

@@ -2,7 +2,7 @@
 // ============================================================
 //  PANOU (portat din viewDash + myBlock)
 // ============================================================
-import { onlyMine } from "@/lib/actions";
+import { onlyMine, toggleSub } from "@/lib/actions";
 import { currentMemberId, deptKpi, deptProgress, depName, isLate, mem, memberStats, taskProgress } from "@/lib/calc";
 import { useStore } from "@/lib/store";
 import { daysLeft } from "@/lib/utils";
@@ -15,7 +15,6 @@ function MyBlock() {
   const authEmail = useStore((s) => s.authEmail);
   const kmonth = useStore((s) => s.kmonth);
   const emonth = useStore((s) => s.emonth);
-  const toggleSubAction = useStore((s) => s.mutate);
 
   // Identitate automată din contul logat; dacă nu ai un membru asociat, blocul nu apare.
   const myId = currentMemberId(S, me, authEmail);
@@ -61,18 +60,7 @@ function MyBlock() {
         </div>
         {subs.slice(0, 6).map((x) => (
           <div className="sub" key={x.sid}>
-            <button
-              className="cb"
-              onClick={() =>
-                toggleSubAction((St) => {
-                  const t = St.tasks.find((z) => z.id === x.tid);
-                  const s = t?.subtasks.find((z) => z.id === x.sid);
-                  if (!t || !s) return;
-                  s.done = !s.done;
-                  if (t.subtasks.every((z) => z.done) && t.status !== "gata") t.status = "review";
-                })
-              }
-            />
+            <button className="cb" onClick={() => toggleSub(x.tid, x.sid)} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="st">{x.title}</div>
               <div className="mini">{x.taskTitle}</div>

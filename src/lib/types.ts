@@ -21,6 +21,8 @@ export interface Member {
   active: boolean;
   /** Emailul de acces — cine are email aici primește magic link (whitelist). */
   email?: string;
+  /** Data primului login reușit — setat automat; ascunde butonul „Trimite link”. */
+  activatedAt?: string;
 }
 
 export interface Subtask {
@@ -29,6 +31,14 @@ export interface Subtask {
   assignee: string;
   deadline: string;
   done: boolean;
+  /** Data la care a fost bifat — permite numărarea pe lună în KPI-urile automate. */
+  doneAt?: string;
+}
+
+/** O finalizare de task (jurnal) — supraviețuiește reînnoirii ciclului recurent. */
+export interface Completion {
+  d: string;
+  onTime: boolean;
 }
 
 export interface Task {
@@ -50,7 +60,12 @@ export interface Task {
   subtasks: Subtask[];
   createdAt: string;
   completedAt: string;
+  /** Jurnal de finalizări — sursa KPI-urilor automate (istoric corect lună de lună). */
+  completions?: Completion[];
 }
+
+/** Sursa unui KPI automat — metrică derivată din taskuri. Gol = manual. */
+export type KpiAuto = "" | "tasks_done" | "on_time_rate" | "subtasks_done" | "tasks_created";
 
 export interface Kpi {
   id: string;
@@ -61,6 +76,10 @@ export interface Kpi {
   unit: string;
   dir: KpiDir;
   vals: Record<string, number>;
+  /** Setat → valoarea lunii se calculează automat din taskuri (fără +/−). */
+  auto?: KpiAuto;
+  /** Filtru opțional pe etichetă pentru KPI-urile automate (ex: „Video”). */
+  tag?: string;
 }
 
 export interface Evaluation {

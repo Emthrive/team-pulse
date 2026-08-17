@@ -21,11 +21,25 @@ export function Crm() {
   const S = useStore((s) => s.S);
   const tab = useStore((s) => s.tab);
   const collapsed = useStore((s) => s.collapsed);
+  const authEmail = useStore((s) => s.authEmail);
+  const mutate = useStore((s) => s.mutate);
   const admin = useIsAdmin();
 
   useEffect(() => {
     bootstrap();
   }, [bootstrap]);
+
+  // Primul login al unui membru invitat → marcăm contul ca activat (o singură dată).
+  useEffect(() => {
+    if (!S || !authEmail) return;
+    const m = S.members.find((x) => (x.email || "").toLowerCase() === authEmail);
+    if (m && !m.activatedAt) {
+      mutate((St) => {
+        const mm = St.members.find((x) => x.id === m.id);
+        if (mm && !mm.activatedAt) mm.activatedAt = new Date().toISOString().slice(0, 10);
+      });
+    }
+  }, [S, authEmail, mutate]);
 
   // Setări e doar pentru admin; dacă un user normal ajunge cumva pe „set”, cade pe Panou.
   const activeTab = tab === "set" && !admin ? "dash" : tab;

@@ -18,6 +18,7 @@ export function toggleSub(tid: string, sid: string) {
     const s = t.subtasks.find((x) => x.id === sid);
     if (!s) return;
     s.done = !s.done;
+    s.doneAt = s.done ? todayISO() : "";
     if (t.subtasks.every((x) => x.done) && t.status !== "gata") t.status = "review";
   });
 }
@@ -39,6 +40,9 @@ export function finish(id: string) {
     t.status = "gata";
     t.progress = 100;
     t.completedAt = todayISO();
+    // Jurnal de finalizări — alimentează KPI-urile automate, lună de lună.
+    t.completions = t.completions || [];
+    t.completions.push({ d: todayISO(), onTime: !t.deadline || todayISO() <= t.deadline });
   });
 }
 
@@ -48,6 +52,8 @@ export function reopen(id: string) {
     if (!t) return;
     t.status = "lucru";
     t.completedAt = "";
+    // Redeschis → finalizarea nu mai e valabilă; scoatem ultima intrare din jurnal.
+    if (t.completions && t.completions.length) t.completions.pop();
   });
 }
 
@@ -77,7 +83,7 @@ export function bump(id: string, dir: number) {
   const { kmonth } = st();
   st().mutate((S) => {
     const k = S.kpis.find((x) => x.id === id);
-    if (!k) return;
+    if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
     const step =
       Number(k.target) >= 1000 ? Math.round(Number(k.target) / 100) : Number(k.target) >= 100 ? 5 : 1;
     k.vals = k.vals || {};
@@ -89,7 +95,7 @@ export function setKpiVal(id: string, v: string) {
   const { kmonth } = st();
   st().mutate((S) => {
     const k = S.kpis.find((x) => x.id === id);
-    if (!k) return;
+    if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
     k.vals = k.vals || {};
     k.vals[kmonth] = Math.max(0, Number(String(v).replace(",", ".")) || 0);
   });
