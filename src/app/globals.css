@@ -704,6 +704,20 @@ textarea {
     gap: 10px;
     min-width: 0;
   }
+  .brand-expanded {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+    padding-left: 2px;
+  }
+  .brand-expanded .hsub {
+    white-space: nowrap;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 10px;
+  }
   .brandtext {
     min-width: 0;
     overflow: hidden;
@@ -717,6 +731,14 @@ textarea {
     text-transform: none;
     letter-spacing: 0.02em;
     font-size: 10.5px;
+  }
+
+  /* Wordmark: „Pulse” subliniat cu bara gradient (ca underscore-ul emthrive). */
+  .brand-pulse {
+    padding-bottom: 3px;
+    background: linear-gradient(90deg, #1b67c6, #38c6ee) no-repeat;
+    background-size: 100% 3px;
+    background-position: 0 100%;
   }
   .collapse-btn {
     flex: 0 0 auto;

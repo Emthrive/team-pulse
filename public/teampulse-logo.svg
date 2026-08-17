@@ -1,0 +1,11 @@
+<svg width="566" height="112" viewBox="14 40 566 112" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tpGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1B67C6"/>
+      <stop offset="1" stop-color="#38C6EE"/>
+    </linearGradient>
+  </defs>
+  <text x="20" y="120" textLength="250" lengthAdjust="spacingAndGlyphs" font-family="'Arial Black','Helvetica Neue',Arial,sans-serif" font-size="100" fill="#0B0B0B">team</text>
+  <text x="270" y="120" textLength="300" lengthAdjust="spacingAndGlyphs" font-family="'Arial Black','Helvetica Neue',Arial,sans-serif" font-size="100" fill="#0B0B0B">pulse</text>
+  <rect x="270" y="132" width="300" height="15" rx="3" fill="url(#tpGrad)"/>
+</svg>

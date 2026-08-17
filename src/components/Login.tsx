@@ -44,7 +44,9 @@ export function Login({ finishing }: { finishing?: boolean }) {
         <div className="row" style={{ gap: 11, marginBottom: 6 }}>
           <div className="mark">T</div>
           <div>
-            <div className="htitle">TeamPulse</div>
+            <div className="htitle">
+              Team<span className="brand-pulse">Pulse</span>
+            </div>
             <div className="hsub">powered by Emthrive</div>
           </div>
         </div>

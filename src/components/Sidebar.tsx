@@ -21,6 +21,7 @@ import { firebaseReady, getAuthClient } from "@/lib/firebase";
 import { whoAmI } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import type { TabId } from "@/lib/types";
+import { LogoMark, Wordmark } from "./Brand";
 
 const NAV: { id: TabId; n: string; Icon: LucideIcon }[] = [
   { id: "dash", n: "Panou", Icon: LayoutDashboard },
@@ -57,15 +58,14 @@ export function Sidebar() {
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="side-top">
-        <div className="brand">
-          <div className="mark">T</div>
-          {!collapsed && (
-            <div className="brandtext">
-              <div className="htitle">TeamPulse</div>
-              <div className="hsub">powered by Emthrive</div>
-            </div>
-          )}
-        </div>
+        {collapsed ? (
+          <LogoMark size={34} />
+        ) : (
+          <div className="brand-expanded">
+            <Wordmark height={22} />
+            <div className="hsub">powered by Emthrive</div>
+          </div>
+        )}
         <button
           className="collapse-btn"
           onClick={toggleCollapsed}
