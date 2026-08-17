@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
-import { currentMemberId, depName, isLate, memName, taskProgress } from "@/lib/calc";
+import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
@@ -71,7 +71,7 @@ export function TaskCard({ task }: { task: Task }) {
             )}
           </div>
         </div>
-        <Avatar name={t.assignee ? memName(S, t.assignee) : null} />
+        <Avatar name={t.assignee ? memName(S, t.assignee) : null} photo={t.assignee ? mem(S, t.assignee)?.photo : undefined} />
       </div>
 
       <div style={{ marginTop: 10 }} className="row">

@@ -28,6 +28,8 @@ export interface Member {
   activatedAt?: string;
   /** Rol în platformă: gol = utilizator normal; „manager” — rezervat, fără atribuții încă. */
   platformRole?: "" | "manager";
+  /** Poza de profil — data-URL JPEG 128×128, comprimată (limită dură la upload). */
+  photo?: string;
 }
 
 export interface Subtask {

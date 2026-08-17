@@ -1132,3 +1132,63 @@ textarea {
     margin-top: 10px;
   }
 }
+
+/* ============================================================
+   PROFIL — poza de profil
+============================================================ */
+@layer components {
+  .av img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+  .pf-photo {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: rgba(25, 200, 219, 0.14);
+    padding: 0;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .pf-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .pf-initials {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--color-turq);
+  }
+  .pf-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 4px 0 6px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(2, 5, 25, 0.66);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .pf-photo:hover .pf-hint {
+    opacity: 1;
+  }
+  .foot-ic img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+}

@@ -19,9 +19,11 @@ import {
 import { useIsAdmin } from "@/lib/admin";
 import { currentMemberId, mem } from "@/lib/calc";
 import { firebaseReady, getAuthClient } from "@/lib/firebase";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { TabId } from "@/lib/types";
 import { LogoMark, Wordmark } from "./Brand";
+import { ProfileModal } from "./ProfileModal";
 
 const NAV: { id: TabId; n: string; Icon: LucideIcon }[] = [
   { id: "dash", n: "Panou", Icon: LayoutDashboard },
@@ -41,6 +43,7 @@ export function Sidebar() {
   const collapsed = useStore((s) => s.collapsed);
   const toggleCollapsed = useStore((s) => s.toggleCollapsed);
   const admin = useIsAdmin();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // Utilizatorul normal nu vede Setări.
   const nav = admin ? NAV : NAV.filter((n) => n.id !== "set");
@@ -54,6 +57,17 @@ export function Sidebar() {
 
   const identityName = meMember ? meMember.n : authEmail || "cont local";
   const identitySub = meMember && authEmail ? authEmail : null;
+
+  // Onboarding: fără poză de profil → modalul se deschide singur la fiecare
+  // intrare în platformă (o singură dată per încărcare, până îţi pui poza).
+  const promptedRef = useRef(false);
+  useEffect(() => {
+    if (promptedRef.current) return;
+    if (meMember && !meMember.photo) {
+      promptedRef.current = true;
+      setProfileOpen(true);
+    }
+  }, [meMember]);
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -95,9 +109,14 @@ export function Sidebar() {
       </nav>
 
       <div className="side-foot">
-        <div className="foot-id" title={identitySub || identityName}>
+        <button className="foot-id" onClick={() => setProfileOpen(true)} title="Profilul meu">
           <span className="foot-ic">
-            <UserRound size={18} strokeWidth={2.2} />
+            {meMember?.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={meMember.photo} alt={identityName} />
+            ) : (
+              <UserRound size={18} strokeWidth={2.2} />
+            )}
           </span>
           {!collapsed && (
             <span className="foot-txt">
@@ -105,7 +124,7 @@ export function Sidebar() {
               <span className="foot-mail">{identitySub || (meMember ? "membru în echipă" : "cont conectat")}</span>
             </span>
           )}
-        </div>
+        </button>
         {firebaseReady && (
           <button
             className="foot-out"
@@ -118,6 +137,7 @@ export function Sidebar() {
           </button>
         )}
       </div>
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
     </aside>
   );
 }

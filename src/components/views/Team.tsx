@@ -58,7 +58,7 @@ export function Team() {
           return (
             <div className="card" key={m.id}>
               <div className="row" style={{ alignItems: "flex-start", gap: 11 }}>
-                <Avatar name={m.n} lg />
+                <Avatar name={m.n} photo={m.photo} lg />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h4 style={{ fontSize: 15 }}>
                     {m.n} {m.id === myId && <span className="chip gold">eu</span>}{" "}
@@ -144,7 +144,7 @@ export function Team() {
               .filter((m) => !m.active)
               .map((m) => (
                 <div className="lead" key={m.id}>
-                  <Avatar name={m.n} />
+                  <Avatar name={m.n} photo={m.photo} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 13.5 }}>{m.n}</div>
                     <div className="mini">{m.role || ""}</div>

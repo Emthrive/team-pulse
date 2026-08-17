@@ -47,10 +47,25 @@ export function Bar({ pct, cls }: { pct: number; cls?: string }) {
   );
 }
 
-export function Avatar({ name, lg }: { name?: string | null; lg?: boolean }) {
+export function Avatar({
+  name,
+  photo,
+  lg,
+}: {
+  name?: string | null;
+  photo?: string;
+  lg?: boolean;
+}) {
   return (
     <div className={`av ${lg ? "lg" : ""}`} title={name || "nealocat"}>
-      {name ? initials(name) : "—"}
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo} alt={name || ""} />
+      ) : name ? (
+        initials(name)
+      ) : (
+        "—"
+      )}
     </div>
   );
 }

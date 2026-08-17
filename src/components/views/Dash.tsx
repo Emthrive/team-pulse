@@ -44,7 +44,7 @@ function MyBlock() {
       </div>
       <div className="card">
         <div className="row" style={{ alignItems: "center", gap: 11 }}>
-          <Avatar name={meMember.n} lg />
+          <Avatar name={meMember.n} photo={meMember.photo} lg />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700 }}>{meMember.n}</div>
             <div className="mini">
@@ -99,11 +99,11 @@ export function Dash() {
     ? Math.round(ts.reduce((a, t) => a + taskProgress(t), 0) / ts.length)
     : 0;
 
+  // Toţi colegii activi apar în clasament — fără date de scor încă = 0.
   const board = S.members
     .filter((m) => m.active)
     .map((m) => ({ m, s: memberStats(S, m.id, kmonths, emonth) }))
-    .filter((x) => x.s.total !== null)
-    .sort((a, b) => (b.s.total as number) - (a.s.total as number))
+    .sort((a, b) => (b.s.total ?? 0) - (a.s.total ?? 0))
     .slice(0, 6);
 
   const urgent = [...late, ...soon].slice(0, 7);
@@ -210,7 +210,7 @@ export function Dash() {
           board.map((x, i) => (
             <div className="lead" key={x.m.id}>
               <div className="rank">{i + 1}</div>
-              <Avatar name={x.m.n} />
+              <Avatar name={x.m.n} photo={x.m.photo} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5 }}>{x.m.n}</div>
                 <div className="mini">
@@ -224,14 +224,14 @@ export function Dash() {
                     fontWeight: 800,
                     fontSize: 16,
                     color:
-                      (x.s.total as number) >= 80
+                      (x.s.total ?? 0) >= 80
                         ? "var(--color-green)"
-                        : (x.s.total as number) >= 50
+                        : (x.s.total ?? 0) >= 50
                           ? "var(--color-turq)"
                           : "var(--color-red)",
                   }}
                 >
-                  {x.s.total}
+                  {x.s.total ?? 0}
                 </div>
                 <div className="mini">scor</div>
               </div>
