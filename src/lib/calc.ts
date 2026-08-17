@@ -50,6 +50,11 @@ export function kpiAutoVal(S: CrmState, k: Kpi, mth: string): number {
         (a, t) => a + (t.completions || []).filter((c) => c.d.slice(0, 7) === mth).length,
         0,
       );
+    case "epics_done":
+      // doar Epic-urile (taskuri cu subtaskuri) finalizate în luna respectivă
+      return scoped
+        .filter((t) => (t.subtasks || []).length > 0)
+        .reduce((a, t) => a + (t.completions || []).filter((c) => c.d.slice(0, 7) === mth).length, 0);
     case "on_time_rate": {
       const comps = scoped.flatMap((t) =>
         (t.completions || []).filter((c) => c.d.slice(0, 7) === mth),

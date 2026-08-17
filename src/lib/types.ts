@@ -68,7 +68,7 @@ export interface Task {
 }
 
 /** Sursa unui KPI automat — metrică derivată din taskuri. Gol = manual. */
-export type KpiAuto = "" | "tasks_done" | "on_time_rate" | "subtasks_done" | "tasks_created";
+export type KpiAuto = "" | "tasks_done" | "epics_done" | "on_time_rate" | "subtasks_done" | "tasks_created";
 
 export interface Kpi {
   id: string;

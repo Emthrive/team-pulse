@@ -165,6 +165,27 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v9: KPI automat „Epice finalizate" per departament (taskuri cu subtaskuri, finalizate).
+  if ((S.version || 2) < 9) {
+    S.departments.forEach((d) => {
+      if (!S.kpis.some((k) => k.dept === d.id && k.auto === "epics_done"))
+        S.kpis.push({
+          id: uid(),
+          n: "Epice finalizate",
+          dept: d.id,
+          assignee: "",
+          target: 2,
+          unit: "buc",
+          dir: "up",
+          vals: {},
+          auto: "epics_done",
+          tag: "",
+        });
+    });
+    S.version = 9;
+    changed = true;
+  }
+
   // „Data de acoperire" a fost unificată cu deadline-ul: mutăm valorile vechi.
   (S.tasks || []).forEach((t) => {
     const legacy = t as { coverDate?: string; coverLabel?: string };

@@ -29,6 +29,7 @@ import { Bar } from "../ui/primitives";
 
 const AUTO_LABEL: Record<string, string> = {
   tasks_done: "taskuri finalizate",
+  epics_done: "Epice finalizate",
   on_time_rate: "% la termen",
   subtasks_done: "subtaskuri bifate",
   tasks_created: "taskuri create",

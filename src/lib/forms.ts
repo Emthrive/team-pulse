@@ -290,6 +290,7 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
       options: [
         { v: "", l: "Manual (introduci valoarea lunar)" },
         { v: "tasks_done", l: "Auto · taskuri finalizate în lună" },
+        { v: "epics_done", l: "Auto · Epice finalizate în lună" },
         { v: "on_time_rate", l: "Auto · % finalizate la termen" },
         { v: "subtasks_done", l: "Auto · subtaskuri bifate în lună" },
         { v: "tasks_created", l: "Auto · taskuri create în lună" },
