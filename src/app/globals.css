@@ -342,16 +342,16 @@ textarea {
   .bar.red > i {
     background: linear-gradient(90deg, var(--color-red), #ff9aae);
   }
-  .ring {
+  .pring {
     width: 52px;
     height: 52px;
     flex: 0 0 auto;
     position: relative;
   }
-  .ring svg {
+  .pring svg {
     transform: rotate(-90deg);
   }
-  .ring b {
+  .pring b {
     position: absolute;
     inset: 0;
     display: grid;
@@ -1032,5 +1032,103 @@ textarea {
   .month-input::-webkit-calendar-picker-indicator {
     filter: invert(0.7) sepia(1) saturate(3) hue-rotate(150deg);
     cursor: pointer;
+  }
+}
+
+/* ============================================================
+   CALENDAR DE PERIOADĂ (month range picker)
+============================================================ */
+@layer components {
+  .mrp {
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .mrp-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    color: #fff;
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .mrp-trigger svg {
+    color: var(--color-turq);
+  }
+  .mrp-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+  }
+  .mrp-pop {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 80;
+    width: 274px;
+    background: #080f3a;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  }
+  .mrp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .mrp-head b {
+    font-size: 14px;
+  }
+  .mrp-head button {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 0;
+  }
+  .mrp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .mrp-cell {
+    padding: 9px 0;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .mrp-cell:hover {
+    color: #fff;
+  }
+  .mrp-cell.in {
+    background: rgba(25, 200, 219, 0.14);
+    color: var(--color-turq);
+    border-color: var(--line);
+  }
+  .mrp-cell.edge {
+    background: var(--color-turq);
+    color: #04121a;
+  }
+  .mrp-cell.today {
+    border-color: rgba(212, 175, 55, 0.5);
+  }
+  .mrp-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
   }
 }

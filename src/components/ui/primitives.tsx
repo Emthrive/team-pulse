@@ -19,7 +19,7 @@ export function Ring({ pct, color }: { pct: number; color?: string }) {
           ? "var(--color-gold)"
           : "var(--color-red)");
   return (
-    <div className="ring">
+    <div className="pring">
       <svg width="52" height="52" viewBox="0 0 52 52">
         <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(255,255,255,.1)" strokeWidth="5" />
         <circle

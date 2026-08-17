@@ -24,6 +24,7 @@ import { editKpi, newKpi } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { fmtNum, lastMonths } from "@/lib/utils";
 import { DeptBars, Spark, TrendLine } from "../charts/KpiCharts";
+import { MonthRangePicker } from "../ui/MonthRangePicker";
 import { Bar } from "../ui/primitives";
 
 const AUTO_LABEL: Record<string, string> = {
@@ -72,26 +73,7 @@ export function Kpi() {
     <>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div className="filters" style={{ flex: 1, alignItems: "center" }}>
-          <input
-            type="month"
-            className="month-input"
-            value={kstart}
-            onChange={(e) => setKRange(e.target.value, kend)}
-            aria-label="De la luna"
-          />
-          <span className="mini">→</span>
-          <input
-            type="month"
-            className="month-input"
-            value={kend}
-            onChange={(e) => setKRange(kstart, e.target.value)}
-            aria-label="Până la luna"
-          />
-          {!singleMonth && (
-            <button className="btn ghost sm" onClick={() => setKRange(kend, kend)}>
-              Doar {monthLabel(kend)}
-            </button>
-          )}
+          <MonthRangePicker start={kstart} end={kend} onChange={setKRange} />
         </div>
         {admin && (
           <button className="btn sm" onClick={() => newKpi()}>
