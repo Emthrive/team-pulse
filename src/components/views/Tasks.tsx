@@ -1,16 +1,19 @@
 "use client";
 // ============================================================
-//  TASKURI (portat din viewTasks)
+//  TASKURI — board Kanban (ca la Jira): coloane pe status,
+//  carduri compacte, click = modal cu detalii, drag & drop
+//  (userul doar taskurile lui, adminul pe toate).
 // ============================================================
-import { useEffect } from "react";
-import { onlyMine } from "@/lib/actions";
+import { useEffect, useState } from "react";
+import { moveTask } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
-import { currentMemberId, isLate, mem } from "@/lib/calc";
-import { STATUS } from "@/lib/constants";
+import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
+import { prCls, prName, STATUS } from "@/lib/constants";
 import { useStore } from "@/lib/store";
-import type { PriorityId } from "@/lib/types";
-import { daysLeft } from "@/lib/utils";
-import { TaskCard } from "../TaskCard";
+import type { PriorityId, StatusId, Task } from "@/lib/types";
+import { fmtDate } from "@/lib/utils";
+import { TaskDetailModal } from "../TaskDetailModal";
+import { Avatar, Bar } from "../ui/primitives";
 
 const order: Record<PriorityId, number> = { critica: 0, ridicata: 1, medie: 2, scazuta: 3 };
 
@@ -19,11 +22,13 @@ export function Tasks() {
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
   const flt = useStore((s) => s.flt);
-  const open = useStore((s) => s.open);
   const setFlt = useStore((s) => s.setFlt);
   const resetFlt = useStore((s) => s.resetFlt);
-  const toggleOpen = useStore((s) => s.toggleOpen);
   const admin = useIsAdmin();
+
+  const [detail, setDetail] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [over, setOver] = useState<StatusId | null>(null);
 
   // La deschidere, filtrul de membru vine preselectat cu userul curent —
   // mai puţin pentru admin şi manager, care văd toată echipa.
@@ -41,13 +46,6 @@ export function Tasks() {
     ts = ts.filter(
       (t) => t.assignee === flt.member || (t.subtasks || []).some((s) => s.assignee === flt.member),
     );
-  if (flt.status) ts = ts.filter((t) => t.status === flt.status);
-  if (flt.only === "late") ts = ts.filter(isLate);
-  if (flt.only === "week")
-    ts = ts.filter((t) => {
-      const d = daysLeft(t.deadline);
-      return d !== null && d <= 7 && t.status !== "gata";
-    });
 
   ts.sort(
     (a, b) =>
@@ -56,9 +54,15 @@ export function Tasks() {
       String(a.deadline || "9").localeCompare(String(b.deadline || "9")),
   );
 
-  const groups = STATUS.map((s) => ({ st: s, items: ts.filter((t) => t.status === s.id) })).filter(
-    (g) => g.items.length,
-  );
+  const canDrag = (t: Task) => admin || (!!myId && t.assignee === myId);
+
+  const onDrop = (e: React.DragEvent, st: StatusId) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain") || dragId;
+    setOver(null);
+    setDragId(null);
+    if (id) moveTask(id, st);
+  };
 
   return (
     <>
@@ -88,35 +92,88 @@ export function Tasks() {
               </option>
             ))}
         </select>
-        {me && mem(S, me) && (
-          <button className="btn sm" onClick={() => onlyMine()}>
-            Ale mele
-          </button>
-        )}
         <button className="btn ghost sm" onClick={() => resetFlt()}>
           Resetează
         </button>
       </div>
 
-      <div style={{ marginTop: 14 }}>
-        {groups.length ? (
-          groups.map((g) => {
-            const collapsed = !!open["grp_" + g.st.id];
-            return (
-              <div className="grp" key={g.st.id}>
-                <div className="head" onClick={() => toggleOpen("grp_" + g.st.id)}>
-                  <span className={`chip ${g.st.c}`}>{g.st.n}</span>
-                  <span className="n">{g.items.length}</span>
-                  <span className="mini">{collapsed ? "▼" : "▲"}</span>
-                </div>
-                {!collapsed && g.items.map((t) => <TaskCard task={t} key={t.id} />)}
+      <div className="kanban">
+        {STATUS.map((st) => {
+          const items = ts.filter((t) => t.status === st.id);
+          return (
+            <div
+              key={st.id}
+              className={`kcol ${over === st.id ? "over" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (over !== st.id) setOver(st.id);
+              }}
+              onDragLeave={(e) => {
+                if (e.currentTarget === e.target) setOver(null);
+              }}
+              onDrop={(e) => onDrop(e, st.id)}
+            >
+              <div className="kcol-head">
+                <span className={`chip ${st.c}`}>{st.n}</span>
+                <span className="n">{items.length}</span>
               </div>
-            );
-          })
-        ) : (
-          <div className="empty">Niciun task pentru filtrele alese.</div>
-        )}
+              <div className="kcol-body">
+                {items.map((t) => {
+                  const p = taskProgress(t);
+                  const late = isLate(t);
+                  const am = t.assignee ? mem(S, t.assignee) : undefined;
+                  const draggable = canDrag(t);
+                  return (
+                    <div
+                      key={t.id}
+                      className={`kcard ${late ? "late" : ""} ${t.status === "gata" ? "done" : ""} ${dragId === t.id ? "dragging" : ""}`}
+                      draggable={draggable}
+                      title={draggable ? "Trage în altă coloană pentru a schimba statusul" : undefined}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", t.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        setDragId(t.id);
+                      }}
+                      onDragEnd={() => {
+                        setDragId(null);
+                        setOver(null);
+                      }}
+                      onClick={() => setDetail(t.id)}
+                    >
+                      <div className="kc-title">{t.title}</div>
+                      <div className="kc-meta">
+                        {(t.subtasks || []).length > 0 ? (
+                          <span className="chip gold">Epic</span>
+                        ) : (
+                          <span className="chip turq">Task</span>
+                        )}
+                        <span className={`chip ${prCls(t.priority)}`}>{prName(t.priority)}</span>
+                        {!flt.dept && <span className="chip">{depName(S, t.dept)}</span>}
+                        {t.deadline && <span className="chip red">{fmtDate(t.deadline)}</span>}
+                        {(t.subtasks || []).length > 0 && (
+                          <span className="chip">
+                            {(t.subtasks || []).filter((s) => s.done).length}/{(t.subtasks || []).length}
+                          </span>
+                        )}
+                      </div>
+                      <div className="kc-foot">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <Bar pct={p} cls={late ? "red" : ""} />
+                        </div>
+                        <span className="mini mono">{p}%</span>
+                        <Avatar name={am ? am.n : memName(S, t.assignee)} photo={am?.photo} />
+                      </div>
+                    </div>
+                  );
+                })}
+                {!items.length && <div className="kcol-empty">trage un task aici</div>}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {detail && <TaskDetailModal taskId={detail} onClose={() => setDetail(null)} />}
     </>
   );
 }

@@ -1192,3 +1192,105 @@ textarea {
     display: block;
   }
 }
+
+/* ============================================================
+   KANBAN (Taskuri) — coloane pe status, carduri, drag & drop
+============================================================ */
+@layer components {
+  .kanban {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  .kcol {
+    flex: 1 1 0;
+    min-width: 240px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .kcol.over {
+    border-color: var(--color-turq);
+    background: rgba(25, 200, 219, 0.07);
+  }
+  .kcol-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .kcol-head .n {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--color-muted);
+  }
+  .kcol-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 70px;
+  }
+  .kcol-empty {
+    border: 1px dashed var(--line);
+    border-radius: 11px;
+    padding: 18px 8px;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+  .kcard {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    transition: opacity 0.12s ease, border-color 0.12s ease;
+  }
+  .kcard:hover {
+    border-color: rgba(25, 200, 219, 0.4);
+  }
+  .kcard[draggable="true"] {
+    cursor: grab;
+  }
+  .kcard.dragging {
+    opacity: 0.4;
+  }
+  .kcard.late {
+    border-color: rgba(255, 92, 122, 0.38);
+    background: rgba(255, 92, 122, 0.05);
+  }
+  .kcard.done {
+    opacity: 0.62;
+  }
+  .kc-title {
+    font-weight: 700;
+    font-size: 13.5px;
+    line-height: 1.3;
+    margin-bottom: 7px;
+  }
+  .kc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 9px;
+  }
+  .kc-foot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .kc-foot .av {
+    width: 22px;
+    height: 22px;
+    font-size: 8.5px;
+  }
+  .kc-foot .mini {
+    flex: 0 0 auto;
+  }
+}

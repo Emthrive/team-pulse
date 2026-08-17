@@ -57,6 +57,8 @@ interface Store {
   emonth: string;
   form: FormConfig | null;
   collapsed: boolean;
+  /** Modalul „Profilul meu” — ținut global ca să se randeze la rădăcină (fix Safari). */
+  profileOpen: boolean;
 
   bootstrap: () => void;
   mutate: (fn: (s: CrmState) => void) => void;
@@ -71,6 +73,7 @@ interface Store {
   setKRange: (start: string, end: string) => void;
   setEMonth: (v: string) => void;
   toggleCollapsed: () => void;
+  setProfileOpen: (v: boolean) => void;
 
   openForm: (cfg: FormConfig) => void;
   closeForm: () => void;
@@ -123,6 +126,7 @@ export const useStore = create<Store>((set, get) => {
     emonth: monthISO(),
     form: null,
     collapsed: false,
+    profileOpen: false,
 
     bootstrap() {
       if (started) return;
@@ -247,6 +251,9 @@ export const useStore = create<Store>((set, get) => {
     },
     setEMonth(v) {
       set({ emonth: v });
+    },
+    setProfileOpen(v) {
+      set({ profileOpen: v });
     },
     toggleCollapsed() {
       const v = !get().collapsed;

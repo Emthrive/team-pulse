@@ -114,6 +114,34 @@ export function setKpiVal(id: string, v: string) {
   });
 }
 
+/** Mutare pe board (drag & drop): userul doar taskurile lui, adminul pe toate. */
+export function moveTask(id: string, newStatus: import("./types").StatusId) {
+  const { S, me, authEmail } = st();
+  if (!S) return;
+  const t = S.tasks.find((x) => x.id === id);
+  if (!t || t.status === newStatus) return;
+  const myId = currentMemberId(S, me, authEmail);
+  const allowed = isAdminEmail(authEmail) || (myId && t.assignee === myId);
+  if (!allowed) return;
+  st().mutate((St) => {
+    const tk = St.tasks.find((x) => x.id === id);
+    if (!tk) return;
+    // Mutat în „Finalizat” → aceleași efecte ca „Marchez finalizat”.
+    if (newStatus === "gata" && tk.status !== "gata") {
+      tk.progress = 100;
+      tk.completedAt = todayISO();
+      tk.completions = tk.completions || [];
+      tk.completions.push({ d: todayISO(), onTime: !tk.deadline || todayISO() <= tk.deadline });
+    }
+    // Scos din „Finalizat” → ca „Redeschid”.
+    if (tk.status === "gata" && newStatus !== "gata") {
+      tk.completedAt = "";
+      if (tk.completions && tk.completions.length) tk.completions.pop();
+    }
+    tk.status = newStatus;
+  });
+}
+
 export function onlyMine() {
   const { S, me, authEmail } = st();
   const id = S ? currentMemberId(S, me, authEmail) : me;

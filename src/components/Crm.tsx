@@ -2,10 +2,12 @@
 // ============================================================
 //  SHELL-UL APLICAȚIEI (portat din render + init)
 // ============================================================
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useIsAdmin } from "@/lib/admin";
 import { newTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
+import { currentMemberId, mem } from "@/lib/calc";
+import { ProfileModal } from "./ProfileModal";
 import { Sidebar } from "./Sidebar";
 import { Modal } from "./ui/Modal";
 import { Dash } from "./views/Dash";
@@ -24,10 +26,25 @@ export function Crm() {
   const authEmail = useStore((s) => s.authEmail);
   const mutate = useStore((s) => s.mutate);
   const admin = useIsAdmin();
+  const profileOpen = useStore((s) => s.profileOpen);
+  const setProfileOpen = useStore((s) => s.setProfileOpen);
 
   useEffect(() => {
     bootstrap();
   }, [bootstrap]);
+
+  // Onboarding: membru fără poză de profil → modalul se deschide singur la
+  // fiecare intrare (o dată per încărcare, până îşi pune poza).
+  const promptedRef = useRef(false);
+  useEffect(() => {
+    if (promptedRef.current || !S) return;
+    const m0 = currentMemberId(S, useStore.getState().me, authEmail);
+    const memb = m0 ? mem(S, m0) : undefined;
+    if (memb && !memb.photo) {
+      promptedRef.current = true;
+      setProfileOpen(true);
+    }
+  }, [S, authEmail, setProfileOpen]);
 
   // Primul login al unui membru invitat → marcăm contul ca activat (o singură dată).
   useEffect(() => {
@@ -74,6 +91,7 @@ export function Crm() {
         </button>
       )}
       <Modal />
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
     </div>
   );
 }
