@@ -1,0 +1,110 @@
+"use client";
+// ============================================================
+//  SIDEBAR STÂNGA — navigație colapsabilă + branding TeamPulse
+// ============================================================
+import { signOut } from "firebase/auth";
+import {
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings as SettingsIcon,
+  Target,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import { mem } from "@/lib/calc";
+import { firebaseReady, getAuthClient } from "@/lib/firebase";
+import { whoAmI } from "@/lib/forms";
+import { useStore } from "@/lib/store";
+import type { TabId } from "@/lib/types";
+
+const NAV: { id: TabId; n: string; Icon: LucideIcon }[] = [
+  { id: "dash", n: "Panou", Icon: LayoutDashboard },
+  { id: "tasks", n: "Taskuri", Icon: ListChecks },
+  { id: "kpi", n: "KPI", Icon: Target },
+  { id: "team", n: "Echipă", Icon: Users },
+  { id: "set", n: "Setări", Icon: SettingsIcon },
+];
+
+const syncTxt: Record<string, string> = { ok: "salvat", wait: "salvez…", err: "doar local" };
+
+export function Sidebar() {
+  const S = useStore((s) => s.S)!;
+  const me = useStore((s) => s.me);
+  const tab = useStore((s) => s.tab);
+  const sync = useStore((s) => s.sync);
+  const setTab = useStore((s) => s.setTab);
+  const collapsed = useStore((s) => s.collapsed);
+  const toggleCollapsed = useStore((s) => s.toggleCollapsed);
+
+  const meMember = me ? mem(S, me) : undefined;
+
+  return (
+    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+      <div className="side-top">
+        <div className="brand">
+          <div className="mark">T</div>
+          {!collapsed && (
+            <div className="brandtext">
+              <div className="htitle">TeamPulse</div>
+              <div className="hsub">powered by Emthrive</div>
+            </div>
+          )}
+        </div>
+        <button
+          className="collapse-btn"
+          onClick={toggleCollapsed}
+          title={collapsed ? "Extinde meniul" : "Restrânge meniul"}
+          aria-label={collapsed ? "Extinde meniul" : "Restrânge meniul"}
+        >
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+      </div>
+
+      <nav className="side-nav">
+        {NAV.map(({ id, n, Icon }) => (
+          <button
+            key={id}
+            className={id === tab ? "on" : ""}
+            onClick={() => setTab(id)}
+            title={collapsed ? n : undefined}
+          >
+            <Icon size={19} strokeWidth={2.2} />
+            {!collapsed && <span className="label">{n}</span>}
+          </button>
+        ))}
+      </nav>
+
+      <div className="side-foot">
+        <button className="foot-id" onClick={() => whoAmI()} title={meMember ? meMember.n : "Cine sunt?"}>
+          <span className="foot-ic">
+            <UserRound size={18} strokeWidth={2.2} />
+          </span>
+          {!collapsed && (
+            <span className="foot-txt">
+              <span className="foot-name">{meMember ? meMember.n : "Cine sunt?"}</span>
+              <span className={`foot-sync ${sync}`}>
+                <span className={`dot ${sync === "err" ? "err" : sync === "wait" ? "wait" : ""}`} />
+                {syncTxt[sync]}
+              </span>
+            </span>
+          )}
+        </button>
+        {firebaseReady && (
+          <button
+            className="foot-out"
+            onClick={() => signOut(getAuthClient())}
+            title="Ieşi din cont"
+            aria-label="Ieşi din cont"
+          >
+            <LogOut size={18} strokeWidth={2.2} />
+            {!collapsed && <span className="label">Ieşi</span>}
+          </button>
+        )}
+      </div>
+    </aside>
+  );
+}

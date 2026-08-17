@@ -51,6 +51,7 @@ interface Store {
   kmonth: string;
   emonth: string;
   form: FormConfig | null;
+  collapsed: boolean;
 
   bootstrap: () => void;
   mutate: (fn: (s: CrmState) => void) => void;
@@ -63,6 +64,7 @@ interface Store {
   resetFlt: () => void;
   setKMonth: (v: string) => void;
   setEMonth: (v: string) => void;
+  toggleCollapsed: () => void;
 
   openForm: (cfg: FormConfig) => void;
   closeForm: () => void;
@@ -112,6 +114,7 @@ export const useStore = create<Store>((set, get) => {
     kmonth: monthISO(),
     emonth: monthISO(),
     form: null,
+    collapsed: false,
 
     bootstrap() {
       if (started) return;
@@ -123,6 +126,14 @@ export const useStore = create<Store>((set, get) => {
         if (me) set({ me });
       } catch {
         /* fără localStorage */
+      }
+
+      // starea sidebar-ului (colapsat/extins) e per-dispozitiv
+      try {
+        const c = localStorage.getItem("emthrive_nav_collapsed");
+        if (c === "1") set({ collapsed: true });
+      } catch {
+        /* ignore */
       }
 
       if (firebaseReady) {
@@ -221,6 +232,15 @@ export const useStore = create<Store>((set, get) => {
     },
     setEMonth(v) {
       set({ emonth: v });
+    },
+    toggleCollapsed() {
+      const v = !get().collapsed;
+      set({ collapsed: v });
+      try {
+        localStorage.setItem("emthrive_nav_collapsed", v ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
     },
 
     openForm(cfg) {

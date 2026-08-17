@@ -42,10 +42,10 @@ export function Login({ finishing }: { finishing?: boolean }) {
     <div className="ovl" style={{ position: "static", background: "transparent", minHeight: "70vh", alignItems: "center" }}>
       <div className="sheet" style={{ borderRadius: 18, maxWidth: 420 }}>
         <div className="row" style={{ gap: 11, marginBottom: 6 }}>
-          <div className="mark">E</div>
+          <div className="mark">T</div>
           <div>
-            <div className="htitle">Emthrive · CRM intern</div>
-            <div className="hsub">acces echipă</div>
+            <div className="htitle">TeamPulse</div>
+            <div className="hsub">powered by Emthrive</div>
           </div>
         </div>
 

@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Emthrive · CRM Intern",
-  description: "CRM intern Emthrive — echipă, taskuri şi KPI.",
+  title: "TeamPulse · powered by Emthrive",
+  description: "TeamPulse — platformă internă de echipă, taskuri şi KPI, powered by Emthrive.",
 };
 
 export const viewport: Viewport = {
