@@ -33,7 +33,6 @@ export function seed(): CrmState {
     kpi("Reach organic lunar", "mkt", 200000, "vizualizări"),
     kpi("Lead-uri generate din social", "mkt", 60, "lead-uri"),
     kpi("Videoclipuri editate", "mkt", 28, "buc"),
-    kpi("Uptime platforme", "it", 99.5, "%"),
     kpi("Bug-uri rezolvate", "it", 15, "buc"),
     kpi("Funcţionalităţi livrate", "it", 3, "buc"),
     kpi("Venit lunar", "sales", 48000, "RON"),
@@ -119,6 +118,13 @@ export function migrate(S: CrmState): boolean {
       }
     });
     S.version = 4;
+    changed = true;
+  }
+
+  // v5: eliminăm KPI-urile care nu au sens introduse manual (Uptime vine din monitoring, nu de la oameni).
+  if ((S.version || 2) < 5) {
+    S.kpis = S.kpis.filter((k) => !(k.n === "Uptime platforme" && k.dept === "it"));
+    S.version = 5;
     changed = true;
   }
 

@@ -17,6 +17,21 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
   extra.concat(S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })));
 
 // ---------------------------------------------------------------- TASKURI
+/** Tipuri de livrabile — devin etichete și leagă taskul de KPI-urile auto cu filtru de tag. */
+const TASK_TYPES = ["Bug", "Feature", "Postare", "Video", "Propunere"];
+const isType = (g: string) => TASK_TYPES.some((t) => t.toLowerCase() === g.trim().toLowerCase());
+const findType = (tags: string[]) => tags.find((g) => isType(g)) || "";
+/** Combină etichetele libere cu tipul ales (tipul e mereu primul, fără dubluri). */
+function mergeTags(raw: string, ttype: string): string[] {
+  const free = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((g) => !isType(g));
+  if (ttype) free.unshift(ttype);
+  return free;
+}
+
 interface TaskFieldOpts {
   self?: { id: string; dept: string };
   lockDept?: string; // non-admin: doar departamentul lui
@@ -62,7 +77,19 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     }
   }
 
-  fields.push({ key: "tags", label: "Etichete (separate prin virgulă)", value: t ? (t.tags || []).join(", ") : "", ph: "SuccesPlus, Theona, Emthrive" });
+  fields.push({
+    key: "ttype",
+    label: "Tip livrabil (se leagă automat de KPI)",
+    type: "select",
+    value: t ? findType(t.tags || []) : "",
+    options: [{ v: "", l: "fără" }].concat(TASK_TYPES.map((x) => ({ v: x, l: x }))),
+  });
+  fields.push({
+    key: "tags",
+    label: "Alte etichete (separate prin virgulă)",
+    value: t ? (t.tags || []).filter((g) => !isType(g)).join(", ") : "",
+    ph: "SuccesPlus, Theona, Emthrive",
+  });
   fields.push({
     key: "recurring",
     label: "Recurenţă",
@@ -119,7 +146,7 @@ export function newTask() {
         priority: d.priority as Task["priority"],
         status: "todo", // mereu „De făcut" la creare
         progress: 0,
-        tags: d.tags.split(",").map((s) => s.trim()).filter(Boolean),
+        tags: mergeTags(d.tags, d.ttype || ""),
         notes: d.notes,
         subtasks: [],
         recurring: (d.recurring || "") as Task["recurring"],
@@ -157,7 +184,7 @@ export function editTask(id: string) {
       tk.status = d.status as Task["status"];
       // Progresul manual se actualizează doar dacă câmpul a fost prezent (task fără subtaskuri).
       if (d.progress !== undefined) tk.progress = Number(d.progress) || 0;
-      tk.tags = d.tags.split(",").map((s) => s.trim()).filter(Boolean);
+      tk.tags = mergeTags(d.tags, d.ttype || "");
       tk.notes = d.notes;
       tk.recurring = (d.recurring || "") as Task["recurring"];
     },
