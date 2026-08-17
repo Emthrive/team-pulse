@@ -15,6 +15,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useIsAdmin } from "@/lib/admin";
 import { mem } from "@/lib/calc";
 import { firebaseReady, getAuthClient } from "@/lib/firebase";
 import { whoAmI } from "@/lib/forms";
@@ -34,13 +35,24 @@ const syncTxt: Record<string, string> = { ok: "salvat", wait: "salvez…", err: 
 export function Sidebar() {
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
+  const authEmail = useStore((s) => s.authEmail);
   const tab = useStore((s) => s.tab);
   const sync = useStore((s) => s.sync);
   const setTab = useStore((s) => s.setTab);
   const collapsed = useStore((s) => s.collapsed);
   const toggleCollapsed = useStore((s) => s.toggleCollapsed);
+  const admin = useIsAdmin();
 
-  const meMember = me ? mem(S, me) : undefined;
+  // Utilizatorul normal nu vede Setări.
+  const nav = admin ? NAV : NAV.filter((n) => n.id !== "set");
+
+  // Identitatea afișată: membrul ales manual > membrul cu emailul contului logat > emailul contului.
+  const meMember =
+    (me ? mem(S, me) : undefined) ||
+    (authEmail ? S.members.find((m) => (m.email || "").toLowerCase() === authEmail) : undefined);
+
+  const identityName = meMember ? meMember.n : authEmail || "Cine sunt?";
+  const identitySub = meMember && authEmail ? authEmail : null;
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -65,7 +77,7 @@ export function Sidebar() {
       </div>
 
       <nav className="side-nav">
-        {NAV.map(({ id, n, Icon }) => (
+        {nav.map(({ id, n, Icon }) => (
           <button
             key={id}
             className={id === tab ? "on" : ""}
@@ -79,13 +91,18 @@ export function Sidebar() {
       </nav>
 
       <div className="side-foot">
-        <button className="foot-id" onClick={() => whoAmI()} title={meMember ? meMember.n : "Cine sunt?"}>
+        <button
+          className="foot-id"
+          onClick={() => whoAmI()}
+          title={identitySub || identityName}
+        >
           <span className="foot-ic">
             <UserRound size={18} strokeWidth={2.2} />
           </span>
           {!collapsed && (
             <span className="foot-txt">
-              <span className="foot-name">{meMember ? meMember.n : "Cine sunt?"}</span>
+              <span className="foot-name">{identityName}</span>
+              <span className="foot-mail">{identitySub || (meMember ? "membru în echipă" : "cont conectat")}</span>
               <span className={`foot-sync ${sync}`}>
                 <span className={`dot ${sync === "err" ? "err" : sync === "wait" ? "wait" : ""}`} />
                 {syncTxt[sync]}

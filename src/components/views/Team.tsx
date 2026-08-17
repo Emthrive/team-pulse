@@ -3,6 +3,7 @@
 //  ECHIPĂ (portat din viewTeam)
 // ============================================================
 import { claim } from "@/lib/actions";
+import { useIsAdmin } from "@/lib/admin";
 import { depName, memberStats } from "@/lib/calc";
 import { editMember, evalMember, joinTeam, newMember, whoAmI } from "@/lib/forms";
 import { useStore } from "@/lib/store";
@@ -16,6 +17,7 @@ export function Team() {
   const setEMonth = useStore((s) => s.setEMonth);
   const setFlt = useStore((s) => s.setFlt);
   const setTab = useStore((s) => s.setTab);
+  const admin = useIsAdmin();
 
   const W = S.weights;
   const meMember = me ? S.members.find((m) => m.id === me) : undefined;
@@ -31,28 +33,32 @@ export function Team() {
         <div className="filters" style={{ flex: 1 }}>
           <MonthPicker value={emonth} onChange={setEMonth} />
         </div>
-        <button className="btn sm" onClick={() => newMember()}>
-          + Persoană
-        </button>
+        {admin && (
+          <button className="btn sm" onClick={() => newMember()}>
+            + Persoană
+          </button>
+        )}
       </div>
 
-      <div className="card" style={{ marginTop: 12, borderColor: "rgba(212,175,55,.35)" }}>
-        <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4 style={{ fontSize: 14.5 }}>
-              {meMember ? "Eşti în echipă ca " + meMember.n : "Lucrezi în echipa Emthrive?"}
-            </h4>
-            <div className="mini">
-              {meMember
-                ? "Taskurile tale apar primele în Panou."
-                : "Adaugă-te singur, spune ce faci şi îţi apar taskurile tale în Panou."}
+      {admin && (
+        <div className="card" style={{ marginTop: 12, borderColor: "rgba(212,175,55,.35)" }}>
+          <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4 style={{ fontSize: 14.5 }}>
+                {meMember ? "Eşti în echipă ca " + meMember.n : "Lucrezi în echipa Emthrive?"}
+              </h4>
+              <div className="mini">
+                {meMember
+                  ? "Taskurile tale apar primele în Panou."
+                  : "Adaugă-te singur, spune ce faci şi îţi apar taskurile tale în Panou."}
+              </div>
             </div>
+            <button className="btn gold sm" onClick={() => (meMember ? whoAmI() : joinTeam())}>
+              {meMember ? "Schimb" : "Mă adaug în echipă"}
+            </button>
           </div>
-          <button className="btn gold sm" onClick={() => (meMember ? whoAmI() : joinTeam())}>
-            {meMember ? "Schimb" : "Mă adaug în echipă"}
-          </button>
         </div>
-      </div>
+      )}
 
       <p className="mini" style={{ margin: "10px 0 0" }}>
         Scor final = {W.exec}% execuţie taskuri + {W.kpi}% realizare KPI + {W.eval}% evaluare
@@ -106,9 +112,11 @@ export function Team() {
                 </p>
               )}
               <div className="row" style={{ marginTop: 12 }}>
-                <button className="btn sm" onClick={() => evalMember(m.id)}>
-                  {ev ? "Editează evaluarea" : "Evaluează"}
-                </button>
+                {admin && (
+                  <button className="btn sm" onClick={() => evalMember(m.id)}>
+                    {ev ? "Editează evaluarea" : "Evaluează"}
+                  </button>
+                )}
                 <button
                   className="btn ghost sm"
                   onClick={() => {
@@ -123,9 +131,11 @@ export function Team() {
                     Sunt eu
                   </button>
                 )}
-                <button className="btn ghost sm" onClick={() => editMember(m.id)}>
-                  ⋯
-                </button>
+                {admin && (
+                  <button className="btn ghost sm" onClick={() => editMember(m.id)}>
+                    ⋯
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -148,9 +158,11 @@ export function Team() {
                     <div style={{ fontWeight: 700, fontSize: 13.5 }}>{m.n}</div>
                     <div className="mini">{m.role || ""}</div>
                   </div>
-                  <button className="btn ghost sm" onClick={() => editMember(m.id)}>
-                    ⋯
-                  </button>
+                  {admin && (
+                    <button className="btn ghost sm" onClick={() => editMember(m.id)}>
+                      ⋯
+                    </button>
+                  )}
                 </div>
               ))}
           </div>

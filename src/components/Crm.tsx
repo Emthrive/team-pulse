@@ -3,6 +3,7 @@
 //  SHELL-UL APLICAȚIEI (portat din render + init)
 // ============================================================
 import { useEffect } from "react";
+import { useIsAdmin } from "@/lib/admin";
 import { newTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { Sidebar } from "./Sidebar";
@@ -19,12 +20,15 @@ export function Crm() {
   const S = useStore((s) => s.S);
   const tab = useStore((s) => s.tab);
   const collapsed = useStore((s) => s.collapsed);
+  const admin = useIsAdmin();
 
   useEffect(() => {
     bootstrap();
   }, [bootstrap]);
 
-  const showFab = tab === "tasks" || tab === "dash";
+  // Setări e doar pentru admin; dacă un user normal ajunge cumva pe „set”, cade pe Panou.
+  const activeTab = tab === "set" && !admin ? "dash" : tab;
+  const showFab = admin && (activeTab === "tasks" || activeTab === "dash");
 
   return (
     <div className="shell">
@@ -33,13 +37,13 @@ export function Crm() {
         <main className="app-main">
           {!loaded || !S ? (
             <div className="empty">Se încarcă…</div>
-          ) : tab === "dash" ? (
+          ) : activeTab === "dash" ? (
             <Dash />
-          ) : tab === "tasks" ? (
+          ) : activeTab === "tasks" ? (
             <Tasks />
-          ) : tab === "kpi" ? (
+          ) : activeTab === "kpi" ? (
             <Kpi />
-          ) : tab === "team" ? (
+          ) : activeTab === "team" ? (
             <Team />
           ) : (
             <Settings />

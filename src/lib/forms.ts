@@ -4,6 +4,7 @@
 //  Fiecare re-găsește entitatea după id în onSubmit/onDelete,
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
+import { isAdminEmail } from "./admin";
 import { CRIT, PRIO, STATUS } from "./constants";
 import type { CrmState, Member, Task } from "./types";
 import { todayISO, uid } from "./utils";
@@ -335,8 +336,13 @@ export function evalMember(id: string) {
 
 // ---------------------------------------------------------------- IDENTITATE
 export function whoAmI() {
-  const { S, me, openForm, setMe } = st();
+  const { S, me, authEmail, openForm, setMe } = st();
   if (!S) return;
+  const canSelfAdd = isAdminEmail(authEmail);
+  const opts = [{ v: "", l: "— nesetat —" }].concat(
+    S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })),
+  );
+  if (canSelfAdd) opts.push({ v: "__new", l: "+ nu sunt în listă, mă adaug" });
   openForm({
     title: "Cine sunt?",
     note: "Alegerea se salvează doar pe dispozitivul tău. Nu schimbă nimic pentru ceilalţi.",
@@ -346,9 +352,7 @@ export function whoAmI() {
         label: "Eu sunt",
         type: "select",
         value: me,
-        options: [{ v: "", l: "— nesetat —" }]
-          .concat(S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })))
-          .concat([{ v: "__new", l: "+ nu sunt în listă, mă adaug" }]),
+        options: opts,
       },
     ],
     onSubmit: (d) => {

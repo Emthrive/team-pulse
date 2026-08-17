@@ -3,6 +3,7 @@
 //  PANOU (portat din viewDash + myBlock)
 // ============================================================
 import { onlyMine } from "@/lib/actions";
+import { useIsAdmin } from "@/lib/admin";
 import { deptKpi, deptProgress, depName, isLate, mem, memberStats, taskProgress } from "@/lib/calc";
 import { joinTeam } from "@/lib/forms";
 import { useStore } from "@/lib/store";
@@ -17,8 +18,11 @@ function MyBlock() {
   const emonth = useStore((s) => s.emonth);
   const toggleSubAction = useStore((s) => s.mutate);
 
+  const admin = useIsAdmin();
   const meMember = me ? mem(S, me) : undefined;
   if (!me || !meMember) {
+    // Doar adminul poate adăuga persoane; userul normal e adăugat de admin.
+    if (!admin) return null;
     return (
       <div className="card" style={{ marginTop: 10, borderColor: "rgba(212,175,55,.35)" }}>
         <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>

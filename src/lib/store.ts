@@ -42,6 +42,7 @@ export interface FormConfig {
 interface Store {
   S: CrmState | null;
   me: string;
+  authEmail: string;
   sync: SyncState;
   loaded: boolean;
 
@@ -57,6 +58,7 @@ interface Store {
   mutate: (fn: (s: CrmState) => void) => void;
   replaceState: (next: CrmState) => void;
   setMe: (id: string) => void;
+  setAuthEmail: (email: string) => void;
 
   setTab: (t: TabId) => void;
   toggleOpen: (id: string) => void;
@@ -105,6 +107,7 @@ export const useStore = create<Store>((set, get) => {
   return {
     S: null,
     me: "",
+    authEmail: "",
     sync: "ok",
     loaded: false,
 
@@ -212,6 +215,10 @@ export const useStore = create<Store>((set, get) => {
       } catch {
         /* ignore */
       }
+    },
+
+    setAuthEmail(email) {
+      set({ authEmail: (email || "").toLowerCase() });
     },
 
     setTab(t) {

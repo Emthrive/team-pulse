@@ -4,6 +4,7 @@
 // ============================================================
 import { useState } from "react";
 import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
+import { useIsAdmin } from "@/lib/admin";
 import { depName, isLate, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
 import { editSub, editTask, setCover } from "@/lib/forms";
@@ -16,6 +17,7 @@ export function TaskCard({ task }: { task: Task }) {
   const S = useStore((s) => s.S)!;
   const open = useStore((s) => !!s.open[task.id]);
   const toggleOpen = useStore((s) => s.toggleOpen);
+  const admin = useIsAdmin();
   const [subInput, setSubInput] = useState("");
 
   const t = task;
@@ -93,9 +95,11 @@ export function TaskCard({ task }: { task: Task }) {
                   {s.deadline ? " · " + fmtDate(s.deadline) : ""}
                 </div>
               </div>
-              <button className="btn ghost sm" onClick={() => editSub(t.id, s.id)}>
-                ⋯
-              </button>
+              {admin && (
+                <button className="btn ghost sm" onClick={() => editSub(t.id, s.id)}>
+                  ⋯
+                </button>
+              )}
             </div>
           ))}
 
@@ -146,9 +150,11 @@ export function TaskCard({ task }: { task: Task }) {
                 Reînnoiesc ciclul
               </button>
             )}
-            <button className="btn ghost sm" onClick={() => editTask(t.id)}>
-              Editează
-            </button>
+            {admin && (
+              <button className="btn ghost sm" onClick={() => editTask(t.id)}>
+                Editează
+              </button>
+            )}
           </div>
         </div>
       )}

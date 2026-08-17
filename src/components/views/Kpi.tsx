@@ -3,6 +3,7 @@
 //  KPI (portat din viewKpi)
 // ============================================================
 import { bump, setKpiVal } from "@/lib/actions";
+import { useIsAdmin } from "@/lib/admin";
 import { deptKpi, kpiScore, kpiVal, memName } from "@/lib/calc";
 import { editKpi, newKpi } from "@/lib/forms";
 import { useStore } from "@/lib/store";
@@ -13,6 +14,7 @@ export function Kpi() {
   const S = useStore((s) => s.S)!;
   const kmonth = useStore((s) => s.kmonth);
   const setKMonth = useStore((s) => s.setKMonth);
+  const admin = useIsAdmin();
 
   const byDept = S.departments.map((d) => ({ d, ks: S.kpis.filter((k) => k.dept === d.id) }));
 
@@ -22,9 +24,11 @@ export function Kpi() {
         <div className="filters" style={{ flex: 1 }}>
           <MonthPicker value={kmonth} onChange={setKMonth} />
         </div>
-        <button className="btn sm" onClick={() => newKpi()}>
-          + KPI
-        </button>
+        {admin && (
+          <button className="btn sm" onClick={() => newKpi()}>
+            + KPI
+          </button>
+        )}
       </div>
       <p className="mini" style={{ margin: "10px 0 0" }}>
         Valorile se salvează pe luna selectată, deci ai istoric lună de lună.
@@ -58,9 +62,11 @@ export function Kpi() {
                             {k.dir === "down" ? " · ţintă maximă" : ""}
                           </div>
                         </div>
-                        <button className="btn ghost sm" onClick={() => editKpi(k.id)}>
-                          ⋯
-                        </button>
+                        {admin && (
+                          <button className="btn ghost sm" onClick={() => editKpi(k.id)}>
+                            ⋯
+                          </button>
+                        )}
                       </div>
                       <div className="v">
                         <b
