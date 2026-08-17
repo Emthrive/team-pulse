@@ -2,8 +2,10 @@
 // ============================================================
 //  TASKURI (portat din viewTasks)
 // ============================================================
+import { useEffect } from "react";
 import { onlyMine } from "@/lib/actions";
-import { isLate, mem } from "@/lib/calc";
+import { useIsAdmin } from "@/lib/admin";
+import { currentMemberId, isLate, mem } from "@/lib/calc";
 import { STATUS } from "@/lib/constants";
 import { useStore } from "@/lib/store";
 import type { PriorityId } from "@/lib/types";
@@ -15,11 +17,23 @@ const order: Record<PriorityId, number> = { critica: 0, ridicata: 1, medie: 2, s
 export function Tasks() {
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
+  const authEmail = useStore((s) => s.authEmail);
   const flt = useStore((s) => s.flt);
   const open = useStore((s) => s.open);
   const setFlt = useStore((s) => s.setFlt);
   const resetFlt = useStore((s) => s.resetFlt);
   const toggleOpen = useStore((s) => s.toggleOpen);
+  const admin = useIsAdmin();
+
+  // La deschidere, filtrul de membru vine preselectat cu userul curent —
+  // mai puţin pentru admin şi manager, care văd toată echipa.
+  const myId = currentMemberId(S, me, authEmail);
+  const isManager = !!(myId && mem(S, myId)?.platformRole === "manager");
+  useEffect(() => {
+    if (!admin && !isManager && myId && !flt.member) setFlt({ member: myId });
+    // rulează doar la montarea paginii
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   let ts = S.tasks.slice();
   if (flt.dept) ts = ts.filter((t) => t.dept === flt.dept);

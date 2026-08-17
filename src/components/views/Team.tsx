@@ -61,7 +61,8 @@ export function Team() {
                 <Avatar name={m.n} lg />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h4 style={{ fontSize: 15 }}>
-                    {m.n} {m.id === myId && <span className="chip gold">eu</span>}
+                    {m.n} {m.id === myId && <span className="chip gold">eu</span>}{" "}
+                    {m.platformRole === "manager" && <span className="chip turq">manager</span>}
                   </h4>
                   <div className="mini">{m.role || ""}</div>
                   <div className="mini">

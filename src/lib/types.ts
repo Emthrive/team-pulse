@@ -26,6 +26,8 @@ export interface Member {
   email?: string;
   /** Data primului login reușit — setat automat; ascunde butonul „Trimite link”. */
   activatedAt?: string;
+  /** Rol în platformă: gol = utilizator normal; „manager” — rezervat, fără atribuții încă. */
+  platformRole?: "" | "manager";
 }
 
 export interface Subtask {

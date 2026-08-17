@@ -378,6 +378,16 @@ function memberFields(S: CrmState, m: Member | null): FormField[] {
       options: S.departments.map((d) => ({ v: d.id, l: d.n })),
     },
     {
+      key: "platformRole",
+      label: "Rol în platformă",
+      type: "select",
+      value: m ? m.platformRole || "" : "",
+      options: [
+        { v: "", l: "Utilizator" },
+        { v: "manager", l: "Manager (fără atribuţii încă)" },
+      ],
+    },
+    {
       key: "active",
       label: "Stare",
       type: "select",
@@ -409,6 +419,7 @@ export function newMember() {
         depts,
         active: d.active === "1",
         email,
+        platformRole: (d.platformRole || "") as "" | "manager",
       });
       // Trimitem automat link-ul de acces (fire-and-forget).
       if (email) {
@@ -440,6 +451,7 @@ export function editMember(id: string) {
         mm.depts = depts;
         mm.dept = depts[0];
       }
+      mm.platformRole = (d.platformRole || "") as "" | "manager";
       mm.active = d.active === "1";
     },
     onDelete: (draft) => {
