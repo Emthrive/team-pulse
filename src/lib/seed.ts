@@ -128,6 +128,15 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v6: un membru poate fi în mai multe departamente — `dept` devine `depts[]`.
+  if ((S.version || 2) < 6) {
+    S.members.forEach((m) => {
+      if (!Array.isArray(m.depts) || !m.depts.length) m.depts = m.dept ? [m.dept] : [];
+    });
+    S.version = 6;
+    changed = true;
+  }
+
   // „Data de acoperire" a fost unificată cu deadline-ul: mutăm valorile vechi.
   (S.tasks || []).forEach((t) => {
     const legacy = t as { coverDate?: string; coverLabel?: string };

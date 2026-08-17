@@ -2,7 +2,7 @@
 //  HELPERI DE CALCUL — scoruri, progres, KPI (portați din original)
 // ============================================================
 import { CRIT } from "./constants";
-import type { CrmState, Kpi, MemberStats, Task } from "./types";
+import type { CrmState, Kpi, Member, MemberStats, Task } from "./types";
 import { todayISO } from "./utils";
 
 export const dep = (S: CrmState, id: string) => S.departments.find((d) => d.id === id);
@@ -96,6 +96,19 @@ export function currentMemberId(S: CrmState, me: string, authEmail: string): str
     if (m) return m.id;
   }
   return me || "";
+}
+
+/** Toate departamentele unui membru (compatibil cu datele vechi cu un singur `dept`). */
+export function memberDepts(m: Member): string[] {
+  if (m.depts && m.depts.length) return m.depts;
+  return m.dept ? [m.dept] : [];
+}
+
+/** Departamentele utilizatorului curent (gol dacă nu e asociat unui membru). */
+export function myDeptIds(S: CrmState, me: string, authEmail: string): string[] {
+  const id = currentMemberId(S, me, authEmail);
+  const m = id ? mem(S, id) : undefined;
+  return m ? memberDepts(m) : [];
 }
 
 export function memberStats(

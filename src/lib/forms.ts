@@ -5,7 +5,7 @@
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
 import { isAdminEmail } from "./admin";
-import { currentMemberId } from "./calc";
+import { currentMemberId, memberDepts, myDeptIds } from "./calc";
 import { CRIT, PRIO, STATUS } from "./constants";
 import { inviteUser } from "./invite";
 import type { CrmState, KpiAuto, Member, Task } from "./types";
@@ -34,15 +34,21 @@ function mergeTags(raw: string, ttype: string): string[] {
 
 interface TaskFieldOpts {
   self?: { id: string; dept: string };
-  lockDept?: string; // non-admin: doar departamentul lui
+  /** non-admin: doar departamentele lui (poate fi în mai multe) */
+  deptChoices?: string[];
   lockAssignee?: string; // la creare, non-admin: doar el
   forNew?: boolean; // la creare: fără status/progres (mereu „De făcut" / 0)
 }
 function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFieldOpts = {}): FormField[] {
-  const { self, lockDept, lockAssignee, forNew } = opts;
-  const deptOptions = lockDept
-    ? S.departments.filter((d) => d.id === lockDept).map((d) => ({ v: d.id, l: d.n }))
+  const { self, deptChoices, lockAssignee, forNew } = opts;
+  const restricted = !!(deptChoices && deptChoices.length);
+  const deptOptions = restricted
+    ? S.departments.filter((d) => deptChoices!.includes(d.id)).map((d) => ({ v: d.id, l: d.n }))
     : S.departments.map((d) => ({ v: d.id, l: d.n }));
+  // Valoarea implicită: departamentul taskului > filtrul curent (dacă e permis) > primul permis.
+  const fallbackDept = restricted
+    ? (fltDept && deptChoices!.includes(fltDept) ? fltDept : deptChoices![0])
+    : self?.dept || fltDept || S.departments[0].id;
   const assigneeOptions = lockAssignee
     ? S.members.filter((m) => m.id === lockAssignee).map((m) => ({ v: m.id, l: m.n }))
     : memberOpts(S, [{ v: "", l: "nealocat" }]);
@@ -51,9 +57,9 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
     {
       key: "dept",
-      label: lockDept ? "Departament (al tău)" : "Departament",
+      label: restricted ? "Departament (ale tale)" : "Departament",
       type: "select",
-      value: lockDept || (t ? t.dept : self?.dept || fltDept || S.departments[0].id),
+      value: t ? t.dept : fallbackDept,
       options: deptOptions,
     },
     {
@@ -126,13 +132,13 @@ export function newTask() {
   // Pre-completăm cu utilizatorul curent ca responsabil + departamentul lui.
   const selfId = currentMemberId(S, me, authEmail);
   const selfMember = selfId ? S.members.find((m) => m.id === selfId) : undefined;
-  const self = selfMember ? { id: selfMember.id, dept: selfMember.dept } : undefined;
+  const self = selfMember ? { id: selfMember.id, dept: memberDepts(selfMember)[0] || selfMember.dept } : undefined;
   const admin = isAdminEmail(authEmail);
-  const lockDept = !admin && selfMember ? selfMember.dept : undefined;
+  const deptChoices = !admin && selfMember ? memberDepts(selfMember) : undefined;
   const lockAssignee = !admin && selfMember ? selfMember.id : undefined;
   openForm({
     title: "Task nou",
-    fields: taskFields(S, null, flt.dept, { self, lockDept, lockAssignee, forNew: true }),
+    fields: taskFields(S, null, flt.dept, { self, deptChoices, lockAssignee, forNew: true }),
     onSubmit: (d, draft) => {
       if (!d.title.trim()) return;
       const t: Task = {
@@ -166,10 +172,13 @@ export function editTask(id: string) {
   const t = S.tasks.find((x) => x.id === id);
   if (!t) return;
   const selfId = currentMemberId(S, me, authEmail);
-  const lockDept = !isAdminEmail(authEmail) ? t.dept : undefined;
+  // Non-adminul poate muta taskul doar între departamentele lui (+ cel curent al taskului).
+  const deptChoices = !isAdminEmail(authEmail)
+    ? Array.from(new Set([t.dept, ...myDeptIds(S, me, authEmail)])).filter(Boolean)
+    : undefined;
   openForm({
     title: "Editează task",
-    fields: taskFields(S, t, "", { lockDept }),
+    fields: taskFields(S, t, "", { deptChoices }),
     onSubmit: (d, draft) => {
       const tk = draft.tasks.find((x) => x.id === id);
       if (!tk) return;
@@ -313,7 +322,13 @@ function memberFields(S: CrmState, m: Member | null): FormField[] {
     { key: "n", label: "Nume şi prenume", value: m ? m.n : "" },
     { key: "email", label: "Email de acces (primeşte link de login)", type: "text", value: m ? m.email || "" : "", ph: "ex: prenume@emthrive.com" },
     { key: "role", label: "Poziţie", value: m ? m.role : "", ph: "ex: Programator, Consilier vocaţional" },
-    { key: "dept", label: "Departament", type: "select", value: m ? m.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
+    {
+      key: "depts",
+      label: "Departamente (poate fi în mai multe)",
+      type: "checks",
+      value: m ? memberDepts(m).join(",") : S.departments[0].id,
+      options: S.departments.map((d) => ({ v: d.id, l: d.n })),
+    },
     {
       key: "active",
       label: "Stare",
@@ -336,11 +351,14 @@ export function newMember() {
     onSubmit: (d, draft) => {
       if (!d.n.trim()) return;
       const email = d.email.trim().toLowerCase();
+      const depts = (d.depts || "").split(",").map((x) => x.trim()).filter(Boolean);
+      if (!depts.length) depts.push(S.departments[0].id);
       draft.members.push({
         id: uid(),
         n: d.n.trim(),
         role: d.role,
-        dept: d.dept,
+        dept: depts[0],
+        depts,
         active: d.active === "1",
         email,
       });
@@ -369,7 +387,11 @@ export function editMember(id: string) {
       mm.n = d.n.trim() || mm.n;
       mm.email = d.email.trim().toLowerCase();
       mm.role = d.role;
-      mm.dept = d.dept;
+      const depts = (d.depts || "").split(",").map((x) => x.trim()).filter(Boolean);
+      if (depts.length) {
+        mm.depts = depts;
+        mm.dept = depts[0];
+      }
       mm.active = d.active === "1";
     },
     onDelete: (draft) => {

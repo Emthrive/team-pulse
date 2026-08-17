@@ -3,7 +3,7 @@
 //  ECHIPĂ (portat din viewTeam)
 // ============================================================
 import { useIsAdmin } from "@/lib/admin";
-import { currentMemberId, depName, memberStats } from "@/lib/calc";
+import { currentMemberId, depName, memberDepts, memberStats } from "@/lib/calc";
 import { editMember, evalMember, newMember } from "@/lib/forms";
 import { inviteUser } from "@/lib/invite";
 import { useStore } from "@/lib/store";
@@ -64,7 +64,7 @@ export function Team() {
                   </h4>
                   <div className="mini">{m.role || ""}</div>
                   <div className="mini">
-                    {depName(S, m.dept)}
+                    {memberDepts(m).map((id) => depName(S, id)).join(" · ") || "fără departament"}
                     {m.email ? " · " + m.email : " · fără email"}
                     {m.activatedAt && (
                       <span style={{ color: "var(--color-green)" }}> · activ</span>

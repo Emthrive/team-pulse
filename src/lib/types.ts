@@ -17,7 +17,10 @@ export interface Member {
   id: string;
   n: string;
   role: string;
+  /** Departamentul principal (primul din `depts`) — păstrat pentru compatibilitate. */
   dept: string;
+  /** Toate departamentele membrului (un user poate fi în mai multe; doar adminul le setează). */
+  depts?: string[];
   active: boolean;
   /** Emailul de acces — cine are email aici primește magic link (whitelist). */
   email?: string;

@@ -2,7 +2,8 @@
 // ============================================================
 //  ACȚIUNI DIRECTE (fără formular) — portate din original
 // ============================================================
-import { currentMemberId, depName, memName, taskProgress } from "./calc";
+import { isAdminEmail } from "./admin";
+import { currentMemberId, depName, memName, myDeptIds, taskProgress } from "./calc";
 import { prName, stName } from "./constants";
 import { seed } from "./seed";
 import { useStore } from "./store";
@@ -79,11 +80,18 @@ export function renew(id: string) {
   });
 }
 
+/** Doar adminul sau membrii departamentului pot modifica un KPI manual. */
+function canEditKpiVals(S: import("./types").CrmState, deptId: string): boolean {
+  const { me, authEmail } = st();
+  return isAdminEmail(authEmail) || myDeptIds(S, me, authEmail).includes(deptId);
+}
+
 export function bump(id: string, dir: number) {
   const { kmonth } = st();
   st().mutate((S) => {
     const k = S.kpis.find((x) => x.id === id);
     if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
+    if (!canEditKpiVals(S, k.dept)) return; // doar departamentul lui
     const step =
       Number(k.target) >= 1000 ? Math.round(Number(k.target) / 100) : Number(k.target) >= 100 ? 5 : 1;
     k.vals = k.vals || {};
@@ -96,6 +104,7 @@ export function setKpiVal(id: string, v: string) {
   st().mutate((S) => {
     const k = S.kpis.find((x) => x.id === id);
     if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
+    if (!canEditKpiVals(S, k.dept)) return; // doar departamentul lui
     k.vals = k.vals || {};
     k.vals[kmonth] = Math.max(0, Number(String(v).replace(",", ".")) || 0);
   });

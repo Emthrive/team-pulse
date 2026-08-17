@@ -5,7 +5,7 @@
 // ============================================================
 import { bump, setKpiVal } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
-import { deptKpi, kpiHas, kpiScore, kpiVal, memName } from "@/lib/calc";
+import { depName, deptKpi, kpiHas, kpiScore, kpiVal, memName, myDeptIds } from "@/lib/calc";
 import { MONTH_NAMES } from "@/lib/constants";
 import { editKpi, newKpi } from "@/lib/forms";
 import { useStore } from "@/lib/store";
@@ -24,9 +24,13 @@ const monthLabel = (m: string) => MONTH_NAMES[+m.split("-")[1] - 1];
 
 export function Kpi() {
   const S = useStore((s) => s.S)!;
+  const me = useStore((s) => s.me);
+  const authEmail = useStore((s) => s.authEmail);
   const kmonth = useStore((s) => s.kmonth);
   const setKMonth = useStore((s) => s.setKMonth);
   const admin = useIsAdmin();
+  // Valorile manuale pot fi modificate doar de membrii departamentului (adminul peste tot).
+  const myDepts = myDeptIds(S, me, authEmail);
 
   const byDept = S.departments.map((d) => ({ d, ks: S.kpis.filter((k) => k.dept === d.id) }));
   const months = lastMonths(kmonth, 6);
@@ -96,6 +100,7 @@ export function Kpi() {
                   const v = kpiVal(S, k, kmonth);
                   const sc = kpiScore(S, k, kmonth);
                   const isAuto = !!k.auto;
+                  const canVals = admin || myDepts.includes(k.dept);
                   const spark = months.map((m) => ({ m: monthLabel(m), v: kpiVal(S, k, m) }));
                   return (
                     <div className="kpi" key={k.id}>
@@ -136,6 +141,13 @@ export function Kpi() {
                       {isAuto ? (
                         <div className="row" style={{ marginTop: 10 }}>
                           <span className="chip turq">auto · {AUTO_LABEL[k.auto!] || "din taskuri"}</span>
+                          <span className="mini" style={{ marginLeft: "auto" }}>
+                            realizare {sc}%
+                          </span>
+                        </div>
+                      ) : !canVals ? (
+                        <div className="row" style={{ marginTop: 10 }}>
+                          <span className="chip">doar {depName(S, k.dept)}</span>
                           <span className="mini" style={{ marginLeft: "auto" }}>
                             realizare {sc}%
                           </span>

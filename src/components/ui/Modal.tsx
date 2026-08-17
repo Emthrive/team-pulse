@@ -64,6 +64,27 @@ export function Modal() {
                 onChange={(e) => setField(fl.key, e.target.value)}
               />
             );
+          } else if (fl.type === "checks") {
+            const selected = new Set(v.split(",").map((x) => x.trim()).filter(Boolean));
+            ctl = (
+              <div className="checks">
+                {(fl.options || []).map((o) => (
+                  <label className={`check-item ${selected.has(o.v) ? "on" : ""}`} key={o.v}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(o.v)}
+                      onChange={(e) => {
+                        const next = new Set(selected);
+                        if (e.target.checked) next.add(o.v);
+                        else next.delete(o.v);
+                        setField(fl.key, Array.from(next).join(","));
+                      }}
+                    />
+                    <span>{o.l}</span>
+                  </label>
+                ))}
+              </div>
+            );
           } else if (fl.type === "range") {
             ctl = (
               <input

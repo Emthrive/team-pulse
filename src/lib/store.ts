@@ -19,7 +19,8 @@ const ME_KEY = "emthrive_crm_me";
 export interface FormField {
   key: string;
   label: string;
-  type?: "text" | "select" | "textarea" | "range" | "date" | "number";
+  /** „checks” = listă de checkbox-uri; valoarea e id-urile bifate, separate prin virgulă. */
+  type?: "text" | "select" | "textarea" | "range" | "date" | "number" | "checks";
   value?: string | number;
   ph?: string;
   options?: { v: string; l: string }[];
