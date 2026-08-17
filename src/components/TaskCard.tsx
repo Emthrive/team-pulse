@@ -59,9 +59,9 @@ export function TaskCard({ task }: { task: Task }) {
             {t.recurring && (
               <span className="chip gold">{t.recurring === "lunar" ? "lunar" : "săptămânal"}</span>
             )}
-            {t.coverLabel && (
-              <span className={`chip ${t.coverDate ? "gold" : ""}`}>
-                {t.coverLabel}: {t.coverDate ? fmtDate(t.coverDate) : "completează"}
+            {t.coverDate && (
+              <span className="chip gold">
+                {t.coverLabel || "Acoperit până la"}: {fmtDate(t.coverDate)}
               </span>
             )}
             {(t.tags || []).map((g) => (
@@ -153,7 +153,7 @@ export function TaskCard({ task }: { task: Task }) {
               </button>
             )}
             <button className="btn ghost sm" onClick={() => setCover(t.id)}>
-              {t.coverLabel || "Data acoperită"}
+              Data de acoperire
             </button>
             {t.recurring && (
               <button className="btn ghost sm" onClick={() => renew(t.id)}>

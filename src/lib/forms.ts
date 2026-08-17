@@ -4,6 +4,7 @@
 //  Fiecare re-găsește entitatea după id în onSubmit/onDelete,
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
+import { isAdminEmail } from "./admin";
 import { currentMemberId } from "./calc";
 import { CRIT, PRIO, STATUS } from "./constants";
 import { inviteUser } from "./invite";
@@ -16,48 +17,62 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
   extra.concat(S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })));
 
 // ---------------------------------------------------------------- TASKURI
-function taskFields(
-  S: CrmState,
-  t: Task | null,
-  fltDept: string,
-  self?: { id: string; dept: string },
-): FormField[] {
-  return [
+interface TaskFieldOpts {
+  self?: { id: string; dept: string };
+  lockDept?: string; // non-admin: doar departamentul lui
+  lockAssignee?: string; // la creare, non-admin: doar el
+  forNew?: boolean; // la creare: fără status/progres (mereu „De făcut" / 0)
+}
+function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFieldOpts = {}): FormField[] {
+  const { self, lockDept, lockAssignee, forNew } = opts;
+  const deptOptions = lockDept
+    ? S.departments.filter((d) => d.id === lockDept).map((d) => ({ v: d.id, l: d.n }))
+    : S.departments.map((d) => ({ v: d.id, l: d.n }));
+  const assigneeOptions = lockAssignee
+    ? S.members.filter((m) => m.id === lockAssignee).map((m) => ({ v: m.id, l: m.n }))
+    : memberOpts(S, [{ v: "", l: "nealocat" }]);
+
+  const fields: FormField[] = [
     { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
     {
       key: "dept",
-      label: "Departament",
+      label: lockDept ? "Departament (al tău)" : "Departament",
       type: "select",
-      value: t ? t.dept : self?.dept || fltDept || S.departments[0].id,
-      options: S.departments.map((d) => ({ v: d.id, l: d.n })),
+      value: lockDept || (t ? t.dept : self?.dept || fltDept || S.departments[0].id),
+      options: deptOptions,
     },
     {
       key: "assignee",
-      label: "Responsabil",
+      label: lockAssignee ? "Responsabil (tu)" : "Responsabil",
       type: "select",
-      value: t ? t.assignee : self?.id || "",
-      options: memberOpts(S, [{ v: "", l: "nealocat" }]),
+      value: lockAssignee || (t ? t.assignee : self?.id || ""),
+      options: assigneeOptions,
     },
     { key: "deadline", label: "Termen limită", type: "date", value: t ? t.deadline : "" },
     { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "medie", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
-    { key: "status", label: "Status", type: "select", value: t ? t.status : "todo", options: STATUS.map((s) => ({ v: s.id, l: s.n })) },
-    { key: "progress", label: "Progres manual (dacă nu are subtaskuri)", type: "range", value: t ? t.progress || 0 : 0 },
-    { key: "tags", label: "Etichete (separate prin virgulă)", value: t ? (t.tags || []).join(", ") : "", ph: "SuccesPlus, Theona, Emthrive" },
-    {
-      key: "recurring",
-      label: "Recurenţă",
-      type: "select",
-      value: t ? t.recurring || "" : "",
-      options: [
-        { v: "", l: "fără" },
-        { v: "saptamanal", l: "Săptămânal" },
-        { v: "lunar", l: "Lunar" },
-      ],
-    },
-    { key: "coverLabel", label: "Etichetă pentru data de acoperire", value: t ? t.coverLabel || "" : "", ph: "ex: Programat până la" },
-    { key: "coverDate", label: "Data de acoperire", type: "date", value: t ? t.coverDate || "" : "" },
-    { key: "notes", label: "Note", type: "textarea", value: t ? t.notes : "" },
   ];
+
+  // Status și progres doar la editare — la creare taskul e mereu „De făcut" / progres 0.
+  if (!forNew) {
+    fields.push({ key: "status", label: "Status", type: "select", value: t ? t.status : "todo", options: STATUS.map((s) => ({ v: s.id, l: s.n })) });
+    fields.push({ key: "progress", label: "Progres manual (dacă nu are subtaskuri)", type: "range", value: t ? t.progress || 0 : 0 });
+  }
+
+  fields.push({ key: "tags", label: "Etichete (separate prin virgulă)", value: t ? (t.tags || []).join(", ") : "", ph: "SuccesPlus, Theona, Emthrive" });
+  fields.push({
+    key: "recurring",
+    label: "Recurenţă",
+    type: "select",
+    value: t ? t.recurring || "" : "",
+    options: [
+      { v: "", l: "fără" },
+      { v: "saptamanal", l: "Săptămânal" },
+      { v: "lunar", l: "Lunar" },
+    ],
+  });
+  fields.push({ key: "coverDate", label: "Data de acoperire", type: "date", value: t ? t.coverDate || "" : "" });
+  fields.push({ key: "notes", label: "Note", type: "textarea", value: t ? t.notes : "" });
+  return fields;
 }
 
 /** Regula de asignare cu acceptare: propunerea către altcineva devine „pending". */
@@ -82,9 +97,12 @@ export function newTask() {
   const selfId = currentMemberId(S, me, authEmail);
   const selfMember = selfId ? S.members.find((m) => m.id === selfId) : undefined;
   const self = selfMember ? { id: selfMember.id, dept: selfMember.dept } : undefined;
+  const admin = isAdminEmail(authEmail);
+  const lockDept = !admin && selfMember ? selfMember.dept : undefined;
+  const lockAssignee = !admin && selfMember ? selfMember.id : undefined;
   openForm({
     title: "Task nou",
-    fields: taskFields(S, null, flt.dept, self),
+    fields: taskFields(S, null, flt.dept, { self, lockDept, lockAssignee, forNew: true }),
     onSubmit: (d, draft) => {
       if (!d.title.trim()) return;
       const t: Task = {
@@ -96,18 +114,18 @@ export function newTask() {
         assignedBy: "",
         deadline: d.deadline,
         priority: d.priority as Task["priority"],
-        status: d.status as Task["status"],
-        progress: Number(d.progress) || 0,
+        status: "todo", // mereu „De făcut" la creare
+        progress: 0,
         tags: d.tags.split(",").map((s) => s.trim()).filter(Boolean),
         notes: d.notes,
         subtasks: [],
         recurring: (d.recurring || "") as Task["recurring"],
-        coverLabel: d.coverLabel || "",
+        coverLabel: "",
         coverDate: d.coverDate || "",
         createdAt: todayISO(),
-        completedAt: d.status === "gata" ? todayISO() : "",
+        completedAt: "",
       };
-      // Dacă la creare alegi alt responsabil, devine propunere (pending), nu asignare directă.
+      // Dacă la creare (ca admin) alegi alt responsabil, devine propunere (pending).
       applyAssignment(t, d.assignee, selfId);
       draft.tasks.push(t);
     },
@@ -120,9 +138,10 @@ export function editTask(id: string) {
   const t = S.tasks.find((x) => x.id === id);
   if (!t) return;
   const selfId = currentMemberId(S, me, authEmail);
+  const lockDept = !isAdminEmail(authEmail) ? t.dept : undefined;
   openForm({
     title: "Editează task",
-    fields: taskFields(S, t, ""),
+    fields: taskFields(S, t, "", { lockDept }),
     onSubmit: (d, draft) => {
       const tk = draft.tasks.find((x) => x.id === id);
       if (!tk) return;
@@ -139,7 +158,6 @@ export function editTask(id: string) {
       tk.tags = d.tags.split(",").map((s) => s.trim()).filter(Boolean);
       tk.notes = d.notes;
       tk.recurring = (d.recurring || "") as Task["recurring"];
-      tk.coverLabel = d.coverLabel || "";
       tk.coverDate = d.coverDate || "";
     },
     onDelete: (draft) => {
@@ -154,16 +172,12 @@ export function setCover(id: string) {
   const t = S.tasks.find((x) => x.id === id);
   if (!t) return;
   openForm({
-    title: t.coverLabel || "Data acoperită",
-    note: "Până la ce dată este acoperit/realizat acest task (ex: programări făcute până la…, rapoarte trimise până la…).",
-    fields: [
-      { key: "coverLabel", label: "Etichetă", value: t.coverLabel || "Acoperit până la" },
-      { key: "coverDate", label: "Dată", type: "date", value: t.coverDate || "" },
-    ],
+    title: "Data de acoperire",
+    note: "Până la ce dată este acoperit/realizat acest task.",
+    fields: [{ key: "coverDate", label: "Dată", type: "date", value: t.coverDate || "" }],
     onSubmit: (d, draft) => {
       const tk = draft.tasks.find((x) => x.id === id);
       if (!tk) return;
-      tk.coverLabel = d.coverLabel.trim() || tk.coverLabel;
       tk.coverDate = d.coverDate;
     },
   });
