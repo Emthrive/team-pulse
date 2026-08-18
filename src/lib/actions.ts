@@ -43,7 +43,11 @@ export function finish(id: string) {
     t.completedAt = todayISO();
     // Jurnal de finalizări — alimentează KPI-urile automate, lună de lună.
     t.completions = t.completions || [];
-    t.completions.push({ d: todayISO(), onTime: !t.deadline || todayISO() <= t.deadline });
+    t.completions.push({
+      d: todayISO(),
+      onTime: !t.deadline || todayISO() <= t.deadline,
+      n: (t.subtasks || []).length,
+    });
   });
 }
 
@@ -132,7 +136,11 @@ export function moveTask(id: string, newStatus: import("./types").StatusId) {
       tk.progress = 100;
       tk.completedAt = todayISO();
       tk.completions = tk.completions || [];
-      tk.completions.push({ d: todayISO(), onTime: !tk.deadline || todayISO() <= tk.deadline });
+      tk.completions.push({
+        d: todayISO(),
+        onTime: !tk.deadline || todayISO() <= tk.deadline,
+        n: (tk.subtasks || []).length,
+      });
     }
     // Scos din „Finalizat” → ca „Redeschid”; iese și din arhivă, cronometrul repornește la re-finalizare.
     if (tk.status === "gata" && newStatus !== "gata") {

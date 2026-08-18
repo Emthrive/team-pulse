@@ -44,17 +44,32 @@ function kpiScopedTasks(S: CrmState, k: Kpi): { base: Task[]; scoped: Task[] } {
 export function kpiAutoVal(S: CrmState, k: Kpi, mth: string): number {
   const { base, scoped } = kpiScopedTasks(S, k);
 
+  // Câţi copii avea taskul la finalizare (fallback: numărul curent, pt. intrări vechi fără n).
+  const kidsAt = (t: Task, c: { n?: number }) => (c.n !== undefined ? c.n : (t.subtasks || []).length);
+
   switch (k.auto) {
     case "tasks_done":
+      // Un task simplu finalizat = 1; un Epic finalizat = numărul lui de taskuri
+      // (Epicul însuşi se numără separat, la „Epice finalizate").
       return scoped.reduce(
-        (a, t) => a + (t.completions || []).filter((c) => c.d.slice(0, 7) === mth).length,
+        (a, t) =>
+          a +
+          (t.completions || [])
+            .filter((c) => c.d.slice(0, 7) === mth)
+            .reduce((b, c) => {
+              const kids = kidsAt(t, c);
+              return b + (kids > 0 ? kids : 1);
+            }, 0),
         0,
       );
     case "epics_done":
-      // doar Epic-urile (taskuri cu subtaskuri) finalizate în luna respectivă
-      return scoped
-        .filter((t) => (t.subtasks || []).length > 0)
-        .reduce((a, t) => a + (t.completions || []).filter((c) => c.d.slice(0, 7) === mth).length, 0);
+      // doar Epic-urile (taskuri cu taskuri în ele) finalizate în luna respectivă
+      return scoped.reduce(
+        (a, t) =>
+          a +
+          (t.completions || []).filter((c) => c.d.slice(0, 7) === mth && kidsAt(t, c) > 0).length,
+        0,
+      );
     case "on_time_rate": {
       const comps = scoped.flatMap((t) =>
         (t.completions || []).filter((c) => c.d.slice(0, 7) === mth),

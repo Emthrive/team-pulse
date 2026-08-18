@@ -46,6 +46,8 @@ export interface Subtask {
 export interface Completion {
   d: string;
   onTime: boolean;
+  /** Câte taskuri avea Epicul la finalizare (0 = task simplu). */
+  n?: number;
 }
 
 export interface Task {
