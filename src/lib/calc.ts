@@ -16,11 +16,20 @@ export const memName = (S: CrmState, id: string) => {
   return m ? m.n : "nealocat";
 };
 
+/** Progresul unui task simplu (fără subtaskuri) se derivă din status — nu mai
+ *  există progres manual. Taskurile cu subtaskuri se calculează din ele. */
+const STATUS_PROGRESS: Record<Task["status"], number> = {
+  backlog: 0,
+  todo: 0,
+  lucru: 50,
+  testing: 80,
+  gata: 100,
+};
+
 export function taskProgress(t: Task): number {
-  if (t.status === "gata") return 100;
-  if (t.subtasks && t.subtasks.length)
+  if (t.subtasks && t.subtasks.length && t.status !== "gata")
     return Math.round((t.subtasks.filter((s) => s.done).length / t.subtasks.length) * 100);
-  return Number(t.progress) || 0;
+  return STATUS_PROGRESS[t.status] ?? 0;
 }
 
 export function isLate(t: Task): boolean {

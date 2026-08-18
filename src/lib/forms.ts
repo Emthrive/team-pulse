@@ -126,14 +126,10 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "medie", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
   ];
 
-  // Status și progres doar la editare — la creare taskul e mereu „De făcut" / progres 0.
+  // Status doar la editare — la creare taskul e mereu „De făcut". Progresul se
+  // derivă din status (task simplu) sau din subtaskuri (Epic); nu mai e manual.
   if (!forNew) {
     fields.push({ key: "status", label: "Status", type: "select", value: t ? t.status : "todo", options: STATUS.map((s) => ({ v: s.id, l: s.n })) });
-    // Progres manual doar dacă taskul NU are subtaskuri — altfel progresul se ia din subtaskuri.
-    const hasSubtasks = !!(t && t.subtasks && t.subtasks.length);
-    if (!hasSubtasks) {
-      fields.push({ key: "progress", label: "Progres manual", type: "range", value: t ? t.progress || 0 : 0 });
-    }
   }
 
   const curType = t ? findType(t.tags || []) : "";
@@ -275,8 +271,6 @@ export function editTask(id: string) {
       if (d.status === "gata" && tk.status !== "gata") tk.completedAt = todayISO();
       if (d.status !== "gata") tk.completedAt = "";
       tk.status = d.status as Task["status"];
-      // Progresul manual se actualizează doar dacă câmpul a fost prezent (task fără subtaskuri).
-      if (d.progress !== undefined) tk.progress = Number(d.progress) || 0;
       tk.tags = newTags;
       tk.notes = d.notes;
       tk.recurring = (d.recurring || "") as Task["recurring"];
