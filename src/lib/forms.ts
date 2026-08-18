@@ -257,7 +257,7 @@ export function editSub(tid: string, sid: string) {
   const s = t?.subtasks.find((x) => x.id === sid);
   if (!t || !s) return;
   openForm({
-    title: "Subtask",
+    title: "Task din Epic",
     fields: [
       { key: "title", label: "Denumire", value: s.title },
       { key: "assignee", label: "Responsabil", type: "select", value: s.assignee, options: memberOpts(S, [{ v: "", l: "nealocat" }]) },
@@ -292,7 +292,7 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
         { v: "tasks_done", l: "Auto · taskuri finalizate în lună" },
         { v: "epics_done", l: "Auto · Epice finalizate în lună" },
         { v: "on_time_rate", l: "Auto · % finalizate la termen" },
-        { v: "subtasks_done", l: "Auto · subtaskuri bifate în lună" },
+        { v: "subtasks_done", l: "Auto · taskuri bifate în Epice, în lună" },
         { v: "tasks_created", l: "Auto · taskuri create în lună" },
       ],
     },

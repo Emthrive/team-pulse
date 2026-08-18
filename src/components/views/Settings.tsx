@@ -82,8 +82,8 @@ export function Settings() {
       </div>
       <div className="card">
         <p className="mini" style={{ lineHeight: 1.6, margin: 0 }}>
-          <b style={{ color: "var(--color-turq)" }}>Progres task:</b> media subtaskurilor bifate;
-          dacă nu are subtaskuri, se ia progresul manual.
+          <b style={{ color: "var(--color-turq)" }}>Progres task:</b> media taskurilor bifate din Epic;
+          dacă nu are taskuri, se ia progresul manual.
           <br />
           <b style={{ color: "var(--color-turq)" }}>Execuţie:</b> media dintre rata de finalizare la
           termen şi progresul mediu pe taskurile active, minus penalizare pentru întârzieri.

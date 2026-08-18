@@ -111,7 +111,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
         {subs.length > 0 && (
           <div style={{ marginTop: 12 }}>
             <div className="lbl" style={{ marginBottom: 4 }}>
-              Subtaskuri · {subs.filter((s) => s.done).length}/{subs.length}
+              Taskuri · {subs.filter((s) => s.done).length}/{subs.length}
             </div>
             {subs.map((s) => (
               <div className={`sub ${s.done ? "done" : ""}`} key={s.id}>
@@ -138,7 +138,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
         <div className="subadd">
           <input
             value={subInput}
-            placeholder="Subtask nou…"
+            placeholder="Task nou în Epic…"
             onChange={(e) => setSubInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {

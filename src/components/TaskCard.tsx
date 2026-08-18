@@ -66,7 +66,7 @@ export function TaskCard({ task }: { task: Task }) {
             ))}
             {subs.length > 0 && (
               <span className="chip">
-                {subs.filter((s) => s.done).length}/{subs.length} subtaskuri
+                {subs.filter((s) => s.done).length}/{subs.length} taskuri
               </span>
             )}
           </div>
@@ -111,7 +111,7 @@ export function TaskCard({ task }: { task: Task }) {
           <div className="subadd">
             <input
               value={subInput}
-              placeholder="Subtask nou (ex: cover postare SP 12 august)"
+              placeholder="Task nou în Epic…"
               onChange={(e) => setSubInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

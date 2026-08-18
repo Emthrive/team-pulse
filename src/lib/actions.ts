@@ -190,7 +190,7 @@ export function exportCsv() {
   const { S } = st();
   if (!S) return;
   const rows: (string | number)[][] = [
-    ["Task", "Departament", "Responsabil", "Termen", "Prioritate", "Status", "Progres %", "Subtaskuri", "Etichete"],
+    ["Task", "Departament", "Responsabil", "Termen", "Prioritate", "Status", "Progres %", "Taskuri Epic", "Etichete"],
   ];
   S.tasks.forEach((t) =>
     rows.push([

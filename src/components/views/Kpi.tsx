@@ -31,7 +31,7 @@ const AUTO_LABEL: Record<string, string> = {
   tasks_done: "taskuri finalizate",
   epics_done: "Epice finalizate",
   on_time_rate: "% la termen",
-  subtasks_done: "subtaskuri bifate",
+  subtasks_done: "taskuri bifate în Epice",
   tasks_created: "taskuri create",
 };
 

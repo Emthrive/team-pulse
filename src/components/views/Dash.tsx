@@ -47,7 +47,7 @@ function MyBlock() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700 }}>{meMember.n}</div>
             <div className="mini">
-              {mine.length} taskuri active · {subs.length} subtaskuri de bifat
+              {mine.length} taskuri active · {subs.length} taskuri de bifat în Epice
               {stt.late ? (
                 <>
                   {" "}
