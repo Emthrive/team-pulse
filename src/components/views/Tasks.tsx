@@ -29,6 +29,7 @@ export function Tasks() {
   const [detail, setDetail] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<StatusId | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   // La deschidere, filtrul de membru vine preselectat cu userul curent —
   // mai puţin pentru admin şi manager, care văd toată echipa.
@@ -99,7 +100,14 @@ export function Tasks() {
 
       <div className="kanban">
         {STATUS.map((st) => {
-          const items = ts.filter((t) => t.status === st.id);
+          // Finalizat: implicit doar cele recente; arhiva (30+ zile) e pe comutator.
+          const archivedCount =
+            st.id === "gata" ? ts.filter((t) => t.status === "gata" && t.archived).length : 0;
+          const items = ts.filter(
+            (t) =>
+              t.status === st.id &&
+              (st.id !== "gata" || (showArchived ? !!t.archived : !t.archived)),
+          );
           return (
             <div
               key={st.id}
@@ -115,6 +123,15 @@ export function Tasks() {
             >
               <div className="kcol-head">
                 <span className={`chip ${st.c}`}>{st.n}</span>
+                {st.id === "gata" && archivedCount > 0 && (
+                  <button
+                    className={`karh ${showArchived ? "on" : ""}`}
+                    onClick={() => setShowArchived(!showArchived)}
+                    title={showArchived ? "Înapoi la cele recente" : "Vezi taskurile arhivate (30+ zile)"}
+                  >
+                    {showArchived ? "recente" : `arhivă (${archivedCount})`}
+                  </button>
+                )}
                 <span className="n">{items.length}</span>
               </div>
               <div className="kcol-body">
@@ -155,6 +172,7 @@ export function Tasks() {
                             {(t.subtasks || []).filter((s) => s.done).length}/{(t.subtasks || []).length}
                           </span>
                         )}
+                        {t.archived && <span className="chip">arhivat</span>}
                       </div>
                       <div className="kc-foot">
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -166,7 +184,11 @@ export function Tasks() {
                     </div>
                   );
                 })}
-                {!items.length && <div className="kcol-empty">trage un task aici</div>}
+                {!items.length && (
+                  <div className="kcol-empty">
+                    {st.id === "gata" && showArchived ? "nimic în arhivă" : "trage un task aici"}
+                  </div>
+                )}
               </div>
             </div>
           );

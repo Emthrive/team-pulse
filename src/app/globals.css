@@ -1320,3 +1320,20 @@ textarea {
     pointer-events: none;
   }
 }
+
+/* buton arhivă în header-ul coloanei Finalizat */
+@layer components {
+  .karh {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    color: var(--color-muted);
+    border-radius: 99px;
+    padding: 2px 9px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .karh.on {
+    background: rgba(25, 200, 219, 0.14);
+    color: var(--color-turq);
+  }
+}

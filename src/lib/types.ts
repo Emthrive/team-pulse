@@ -2,7 +2,7 @@
 //  MODELUL DE DATE — portat din CRM-ul original
 // ============================================================
 
-export type StatusId = "todo" | "lucru" | "review" | "blocat" | "gata";
+export type StatusId = "backlog" | "todo" | "lucru" | "testing" | "gata";
 export type PriorityId = "critica" | "ridicata" | "medie" | "scazuta";
 export type KpiDir = "up" | "down";
 export type Recurring = "" | "saptamanal" | "lunar";
@@ -69,6 +69,8 @@ export interface Task {
   completedAt: string;
   /** Jurnal de finalizări — sursa KPI-urilor automate (istoric corect lună de lună). */
   completions?: Completion[];
+  /** Arhivat automat: în Finalizat de peste 30 de zile (de la ultima finalizare). */
+  archived?: boolean;
 }
 
 /** Sursa unui KPI automat — metrică derivată din taskuri. Gol = manual. */

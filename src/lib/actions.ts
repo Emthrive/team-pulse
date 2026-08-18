@@ -20,7 +20,7 @@ export function toggleSub(tid: string, sid: string) {
     if (!s) return;
     s.done = !s.done;
     s.doneAt = s.done ? todayISO() : "";
-    if (t.subtasks.every((x) => x.done) && t.status !== "gata") t.status = "review";
+    if (t.subtasks.every((x) => x.done) && t.status !== "gata") t.status = "testing";
   });
 }
 
@@ -53,6 +53,7 @@ export function reopen(id: string) {
     if (!t) return;
     t.status = "lucru";
     t.completedAt = "";
+    t.archived = false;
     // Redeschis → finalizarea nu mai e valabilă; scoatem ultima intrare din jurnal.
     if (t.completions && t.completions.length) t.completions.pop();
   });
@@ -133,9 +134,10 @@ export function moveTask(id: string, newStatus: import("./types").StatusId) {
       tk.completions = tk.completions || [];
       tk.completions.push({ d: todayISO(), onTime: !tk.deadline || todayISO() <= tk.deadline });
     }
-    // Scos din „Finalizat” → ca „Redeschid”.
+    // Scos din „Finalizat” → ca „Redeschid”; iese și din arhivă, cronometrul repornește la re-finalizare.
     if (tk.status === "gata" && newStatus !== "gata") {
       tk.completedAt = "";
+      tk.archived = false;
       if (tk.completions && tk.completions.length) tk.completions.pop();
     }
     tk.status = newStatus;

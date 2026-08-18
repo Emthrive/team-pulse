@@ -3,10 +3,10 @@ import type { PriorityId, StatusId, TabId } from "./types";
 export const CRM_DOC_ID = process.env.NEXT_PUBLIC_CRM_DOC_ID || "main";
 
 export const STATUS: { id: StatusId; n: string; c: string }[] = [
+  { id: "backlog", n: "Backlog", c: "" },
   { id: "todo", n: "De făcut", c: "" },
   { id: "lucru", n: "În lucru", c: "turq" },
-  { id: "review", n: "În verificare", c: "gold" },
-  { id: "blocat", n: "Blocat", c: "red" },
+  { id: "testing", n: "Testing", c: "gold" },
   { id: "gata", n: "Finalizat", c: "green" },
 ];
 

@@ -69,6 +69,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
               #{g}
             </span>
           ))}
+          {t.archived && <span className="chip">arhivat</span>}
         </div>
 
         <div className="row" style={{ gap: 10, marginBottom: 12 }}>
