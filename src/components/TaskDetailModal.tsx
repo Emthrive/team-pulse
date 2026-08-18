@@ -4,10 +4,10 @@
 //  toate informațiile + subtaskuri + acțiuni.
 // ============================================================
 import { useEffect, useState } from "react";
-import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
+import { addSub, finish, moveTask, renew, reopen, toggleSub } from "@/lib/actions";
 import { useIsAdmin } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
-import { prCls, prName, stCls, stName } from "@/lib/constants";
+import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { daysLeft, fmtDate } from "@/lib/utils";
@@ -89,6 +89,25 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
           </span>
         </div>
         <Bar pct={p} cls={late ? "red" : ""} />
+
+        {canEdit && (
+          <div style={{ marginTop: 12 }}>
+            <div className="lbl" style={{ marginBottom: 6 }}>Schimbă statusul</div>
+            <div className="stswitch">
+              {STATUS.map((st) => (
+                <button
+                  key={st.id}
+                  className={`stbtn ${t.status === st.id ? "on" : ""}`}
+                  onClick={() => {
+                    if (st.id !== t.status) moveTask(t.id, st.id);
+                  }}
+                >
+                  {st.n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {subs.length > 0 && (
           <div style={{ marginTop: 12 }}>

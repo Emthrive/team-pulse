@@ -30,6 +30,16 @@ export function Tasks() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<StatusId | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  // Pe telefon: coloanele curg vertical şi nu există drag & drop (statusul se
+  // schimbă din modalul taskului, cu comutatorul rapid).
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const upd = () => setIsMobile(mq.matches);
+    upd();
+    mq.addEventListener("change", upd);
+    return () => mq.removeEventListener("change", upd);
+  }, []);
 
   // La deschidere, filtrul de membru vine preselectat cu userul curent —
   // mai puţin pentru admin şi manager, care văd toată echipa.
@@ -139,7 +149,7 @@ export function Tasks() {
                   const p = taskProgress(t);
                   const late = isLate(t);
                   const am = t.assignee ? mem(S, t.assignee) : undefined;
-                  const draggable = canDrag(t);
+                  const draggable = canDrag(t) && !isMobile;
                   return (
                     <div
                       key={t.id}

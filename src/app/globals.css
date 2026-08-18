@@ -1337,3 +1337,42 @@ textarea {
     color: var(--color-turq);
   }
 }
+
+/* ============================================================
+   MOBIL: board vertical + comutator rapid de status
+============================================================ */
+@layer components {
+  .stswitch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .stbtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    color: var(--color-muted);
+    border-radius: 99px;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .stbtn.on {
+    background: rgba(25, 200, 219, 0.16);
+    color: var(--color-turq);
+    border-color: var(--color-turq);
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  .kanban .kcol {
+    min-width: 0;
+    width: 100%;
+  }
+  .kcard {
+    cursor: pointer !important;
+  }
+}
