@@ -17,18 +17,35 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
   extra.concat(S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })));
 
 // ---------------------------------------------------------------- TASKURI
-/** Tipuri de livrabile — devin etichete și leagă taskul de KPI-urile auto cu filtru de tag. */
-const TASK_TYPES = ["Bug", "Feature", "Postare", "Video", "Campanie", "Propunere"];
-/** Gruparea tipurilor pe departamente, pentru delimitare clară în dropdown. */
-const TASK_TYPE_OPTIONS: { v: string; l: string; g?: string }[] = [
-  { v: "", l: "fără" },
-  { v: "Bug", l: "Bug", g: "IT & App" },
-  { v: "Feature", l: "Feature", g: "IT & App" },
-  { v: "Postare", l: "Postare", g: "Marketing" },
-  { v: "Video", l: "Video", g: "Marketing" },
-  { v: "Campanie", l: "Campanie", g: "Marketing" },
-  { v: "Propunere", l: "Propunere", g: "Parteneriate" },
+/** Tipurile de livrabil pe departament (id-urile stabile din seed) — devin
+ *  etichete și leagă taskul de KPI-urile auto cu filtru de tag. Derivate din
+ *  KPI-urile numărabile ale fiecărui departament (dashboard-ul KPI). */
+const TASK_TYPES_BY_DEPT: { dept: string; types: string[] }[] = [
+  { dept: "it", types: ["Bug", "Feature"] },
+  { dept: "mkt", types: ["Postare", "Video", "Campanie"] },
+  { dept: "sales", types: ["Sesiune 1:1"] },
+  { dept: "cons", types: ["Sesiune consiliere", "Raport"] },
+  { dept: "adm", types: ["Factură", "Raportare financiară"] },
+  { dept: "part", types: ["Propunere", "Parteneriat semnat", "Sponsorizare"] },
 ];
+const TASK_TYPES = TASK_TYPES_BY_DEPT.flatMap((x) => x.types);
+/** Opțiunile dropdown-ului „Tip livrabil": grupate pe departamente, în ordinea
+ *  și cu numele curente din platformă. `allowed` limitează grupurile la
+ *  departamentele utilizatorului (null = toate — admin/manager). Tipul deja
+ *  setat pe task (`current`) rămâne mereu selectabil, ca editarea să nu-l piardă. */
+function taskTypeOptions(S: CrmState, allowed: string[] | null, current = ""): { v: string; l: string; g?: string }[] {
+  const out: { v: string; l: string; g?: string }[] = [{ v: "", l: "fără" }];
+  S.departments.forEach((d) => {
+    const types = TASK_TYPES_BY_DEPT.find((x) => x.dept === d.id)?.types;
+    if (!types) return;
+    const keep = !allowed || allowed.includes(d.id);
+    types.forEach((t) => {
+      if (keep || t === current) out.push({ v: t, l: t, g: d.n });
+    });
+  });
+  if (current && !out.some((o) => o.v === current)) out.push({ v: current, l: current });
+  return out;
+}
 const isType = (g: string) => TASK_TYPES.some((t) => t.toLowerCase() === g.trim().toLowerCase());
 const findType = (tags: string[]) => tags.find((g) => isType(g)) || "";
 /** Combină tipul ales + etichetele existente bifate + cele noi; dedup case-insensitive. */
@@ -118,12 +135,13 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     }
   }
 
+  const curType = t ? findType(t.tags || []) : "";
   fields.push({
     key: "ttype",
     label: "Tip livrabil (se leagă automat de KPI)",
     type: "select",
-    value: t ? findType(t.tags || []) : "",
-    options: TASK_TYPE_OPTIONS,
+    value: curType,
+    options: taskTypeOptions(S, restricted ? deptChoices! : null, curType),
   });
   // Refolosirea etichetelor existente (evită dubluri gen „Emthrive” / „Emthrive.com”):
   // bifezi din listă; câmpul text e doar pentru etichete complet noi.
