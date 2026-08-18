@@ -5,7 +5,7 @@
 //  Perioada e un interval de luni (implicit luna curentă).
 // ============================================================
 import { bump, setKpiVal } from "@/lib/actions";
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import {
   depName,
   deptKpi,
@@ -44,8 +44,8 @@ export function Kpi() {
   const kstart = useStore((s) => s.kstart);
   const kend = useStore((s) => s.kend);
   const setKRange = useStore((s) => s.setKRange);
-  const admin = useIsAdmin();
-  // Valorile manuale pot fi modificate doar de membrii departamentului (adminul peste tot).
+  const { elevated } = useRole();
+  // Valorile manuale pot fi modificate doar de membrii departamentului (adminul şi managerul peste tot).
   const myDepts = myDeptIds(S, me, authEmail);
 
   const byDept = S.departments.map((d) => ({ d, ks: S.kpis.filter((k) => k.dept === d.id) }));
@@ -76,7 +76,7 @@ export function Kpi() {
         <div className="row" style={{ flex: 1 }}>
           <MonthRangePicker start={kstart} end={kend} onChange={setKRange} />
         </div>
-        {admin && (
+        {elevated && (
           <button className="btn sm" onClick={() => newKpi()}>
             + KPI
           </button>
@@ -125,7 +125,7 @@ export function Kpi() {
                   const sc = kpiScoreRange(S, k, range);
                   const target = kpiTargetRange(k, range);
                   const isAuto = !!k.auto;
-                  const canVals = admin || myDepts.includes(k.dept);
+                  const canVals = elevated || myDepts.includes(k.dept);
                   const spark = sparkMonths.map((m) => ({ m: monthLabel(m), v: kpiVal(S, k, m) }));
                   return (
                     <div className="kpi" key={k.id}>
@@ -138,7 +138,7 @@ export function Kpi() {
                             {isAuto && k.tag ? " · #" + k.tag : ""}
                           </div>
                         </div>
-                        {admin && (
+                        {elevated && (
                           <button className="btn ghost sm" onClick={() => editKpi(k.id)}>
                             ⋯
                           </button>

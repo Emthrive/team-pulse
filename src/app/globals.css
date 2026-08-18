@@ -235,6 +235,10 @@ textarea {
   .g3 {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
+  .g4 {
+    /* maxim 4 pe rând, dar coboară fluid pe ecrane mici */
+    grid-template-columns: repeat(auto-fit, minmax(max(240px, (100% - 30px) / 4), 1fr));
+  }
   .sec {
     margin: 26px 0 10px;
     display: flex;

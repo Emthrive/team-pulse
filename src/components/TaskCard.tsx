@@ -4,7 +4,7 @@
 // ============================================================
 import { useState } from "react";
 import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
@@ -19,11 +19,11 @@ export function TaskCard({ task }: { task: Task }) {
   const authEmail = useStore((s) => s.authEmail);
   const open = useStore((s) => !!s.open[task.id]);
   const toggleOpen = useStore((s) => s.toggleOpen);
-  const admin = useIsAdmin();
+  const { elevated } = useRole();
   const [subInput, setSubInput] = useState("");
 
-  // Poţi edita dacă eşti admin sau eşti responsabilul taskului.
-  const canEdit = admin || task.assignee === currentMemberId(S, me, authEmail);
+  // Poţi edita dacă eşti admin/manager sau eşti responsabilul taskului.
+  const canEdit = elevated || task.assignee === currentMemberId(S, me, authEmail);
 
   const t = task;
   const p = taskProgress(t);

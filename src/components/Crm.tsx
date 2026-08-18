@@ -3,7 +3,7 @@
 //  SHELL-UL APLICAȚIEI (portat din render + init)
 // ============================================================
 import { useEffect, useRef } from "react";
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import { newTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { currentMemberId, mem } from "@/lib/calc";
@@ -25,7 +25,7 @@ export function Crm() {
   const collapsed = useStore((s) => s.collapsed);
   const authEmail = useStore((s) => s.authEmail);
   const mutate = useStore((s) => s.mutate);
-  const admin = useIsAdmin();
+  const { elevated } = useRole();
   const profileOpen = useStore((s) => s.profileOpen);
   const setProfileOpen = useStore((s) => s.setProfileOpen);
 
@@ -58,8 +58,8 @@ export function Crm() {
     }
   }, [S, authEmail, mutate]);
 
-  // Setări e doar pentru admin; dacă un user normal ajunge cumva pe „set”, cade pe Panou.
-  const activeTab = tab === "set" && !admin ? "dash" : tab;
+  // Setări e doar pentru admin/manager; dacă un user normal ajunge cumva pe „set”, cade pe Panou.
+  const activeTab = tab === "set" && !elevated ? "dash" : tab;
   // Oricine autentificat îşi poate crea taskuri.
   const showFab = activeTab === "tasks" || activeTab === "dash";
 

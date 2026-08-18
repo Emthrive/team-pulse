@@ -4,7 +4,7 @@
 //  Fiecare re-găsește entitatea după id în onSubmit/onDelete,
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
-import { isAdminEmail } from "./admin";
+import { isAdminEmail, isElevated } from "./admin";
 import { currentMemberId, memberDepts, myDeptIds } from "./calc";
 import { CRIT, PRIO, STATUS } from "./constants";
 import { inviteUser } from "./invite";
@@ -180,9 +180,9 @@ export function newTask() {
   const selfId = currentMemberId(S, me, authEmail);
   const selfMember = selfId ? S.members.find((m) => m.id === selfId) : undefined;
   const self = selfMember ? { id: selfMember.id, dept: memberDepts(selfMember)[0] || selfMember.dept } : undefined;
-  const admin = isAdminEmail(authEmail);
-  const deptChoices = !admin && selfMember ? memberDepts(selfMember) : undefined;
-  const lockAssignee = !admin && selfMember ? selfMember.id : undefined;
+  const elev = isElevated(S, me, authEmail); // admin sau manager
+  const deptChoices = !elev && selfMember ? memberDepts(selfMember) : undefined;
+  const lockAssignee = !elev && selfMember ? selfMember.id : undefined;
   openForm({
     title: "Task nou",
     fields: taskFields(S, null, flt.dept, { self, deptChoices, lockAssignee, forNew: true }),
@@ -219,8 +219,8 @@ export function editTask(id: string) {
   const t = S.tasks.find((x) => x.id === id);
   if (!t) return;
   const selfId = currentMemberId(S, me, authEmail);
-  // Non-adminul poate muta taskul doar între departamentele lui (+ cel curent al taskului).
-  const deptChoices = !isAdminEmail(authEmail)
+  // Utilizatorul normal poate muta taskul doar între departamentele lui (+ cel curent al taskului).
+  const deptChoices = !isElevated(S, me, authEmail)
     ? Array.from(new Set([t.dept, ...myDeptIds(S, me, authEmail)])).filter(Boolean)
     : undefined;
   openForm({
@@ -339,7 +339,7 @@ export function newKpi() {
 }
 
 export function editKpi(id: string) {
-  const { S, openForm } = st();
+  const { S, authEmail, openForm } = st();
   if (!S) return;
   const k = S.kpis.find((x) => x.id === id);
   if (!k) return;
@@ -358,9 +358,12 @@ export function editKpi(id: string) {
       kk.auto = (d.auto || "") as KpiAuto;
       kk.tag = (d.tag || "").trim();
     },
-    onDelete: (draft) => {
-      draft.kpis = draft.kpis.filter((x) => x.id !== id);
-    },
+    // Ştergerea distruge şi istoricul (snapshot-uri) — doar adminul.
+    onDelete: isAdminEmail(authEmail)
+      ? (draft) => {
+          draft.kpis = draft.kpis.filter((x) => x.id !== id);
+        }
+      : null,
   });
 }
 
@@ -371,21 +374,23 @@ function memberFields(S: CrmState, m: Member | null): FormField[] {
     { key: "email", label: "Email de acces (primeşte link de login)", type: "text", value: m ? m.email || "" : "", ph: "ex: prenume@emthrive.com" },
     { key: "role", label: "Poziţie", value: m ? m.role : "", ph: "ex: Programator, Consilier vocaţional" },
     {
-      key: "depts",
-      label: "Departamente (poate fi în mai multe)",
-      type: "checks",
-      value: m ? memberDepts(m).join(",") : S.departments[0].id,
-      options: S.departments.map((d) => ({ v: d.id, l: d.n })),
-    },
-    {
       key: "platformRole",
       label: "Rol în platformă",
       type: "select",
       value: m ? m.platformRole || "" : "",
       options: [
         { v: "", l: "Utilizator" },
-        { v: "manager", l: "Manager (fără atribuţii încă)" },
+        { v: "manager", l: "Manager" },
       ],
+    },
+    {
+      key: "depts",
+      label: "Departamente (poate fi în mai multe)",
+      type: "checks",
+      value: m ? memberDepts(m).join(",") : S.departments[0].id,
+      options: S.departments.map((d) => ({ v: d.id, l: d.n })),
+      // Managerul are acces peste tot — nu ţine de un departament.
+      showIf: (d) => (d.platformRole || "") !== "manager",
     },
     {
       key: "active",
@@ -409,13 +414,15 @@ export function newMember() {
     onSubmit: (d, draft) => {
       if (!d.n.trim()) return;
       const email = d.email.trim().toLowerCase();
-      const depts = (d.depts || "").split(",").map((x) => x.trim()).filter(Boolean);
-      if (!depts.length) depts.push(S.departments[0].id);
+      const isMgr = (d.platformRole || "") === "manager";
+      // Managerul nu ţine de un departament — are acces peste tot.
+      const depts = isMgr ? [] : (d.depts || "").split(",").map((x) => x.trim()).filter(Boolean);
+      if (!isMgr && !depts.length) depts.push(S.departments[0].id);
       draft.members.push({
         id: uid(),
         n: d.n.trim(),
         role: d.role,
-        dept: depts[0],
+        dept: depts[0] || "",
         depts,
         active: d.active === "1",
         email,
@@ -446,12 +453,18 @@ export function editMember(id: string) {
       mm.n = d.n.trim() || mm.n;
       mm.email = d.email.trim().toLowerCase();
       mm.role = d.role;
-      const depts = (d.depts || "").split(",").map((x) => x.trim()).filter(Boolean);
-      if (depts.length) {
-        mm.depts = depts;
-        mm.dept = depts[0];
-      }
       mm.platformRole = (d.platformRole || "") as "" | "manager";
+      if (mm.platformRole === "manager") {
+        // Managerul nu ţine de un departament — are acces peste tot.
+        mm.depts = [];
+        mm.dept = "";
+      } else {
+        const depts = (d.depts || "").split(",").map((x) => x.trim()).filter(Boolean);
+        if (depts.length) {
+          mm.depts = depts;
+          mm.dept = depts[0];
+        }
+      }
       mm.active = d.active === "1";
     },
     onDelete: (draft) => {
@@ -525,7 +538,7 @@ export function newDept() {
 }
 
 export function editDept(id: string) {
-  const { S, openForm } = st();
+  const { S, authEmail, openForm } = st();
   if (!S) return;
   const d = S.departments.find((x) => x.id === id);
   if (!d) return;
@@ -541,11 +554,14 @@ export function editDept(id: string) {
       dd.n = x.n.trim() || dd.n;
       dd.leadId = x.leadId;
     },
-    onDelete: (draft) => {
-      draft.departments = draft.departments.filter((z) => z.id !== id);
-      draft.tasks = draft.tasks.filter((t) => t.dept !== id);
-      draft.kpis = draft.kpis.filter((k) => k.dept !== id);
-    },
+    // Ştergerea unui departament şterge şi taskurile/KPI-urile lui — doar adminul.
+    onDelete: isAdminEmail(authEmail)
+      ? (draft) => {
+          draft.departments = draft.departments.filter((z) => z.id !== id);
+          draft.tasks = draft.tasks.filter((t) => t.dept !== id);
+          draft.kpis = draft.kpis.filter((k) => k.dept !== id);
+        }
+      : null,
   });
 }
 

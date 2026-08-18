@@ -28,6 +28,8 @@ export interface FormField {
   min?: number;
   max?: number;
   step?: number | string;
+  /** Câmpul apare doar când condiţia pe valorile curente ale formularului e adevărată. */
+  showIf?: (d: Record<string, string>) => boolean;
 }
 
 export interface FormConfig {

@@ -16,7 +16,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import { currentMemberId, mem } from "@/lib/calc";
 import { firebaseReady, getAuthClient } from "@/lib/firebase";
 import { useStore } from "@/lib/store";
@@ -40,11 +40,11 @@ export function Sidebar() {
   const setTab = useStore((s) => s.setTab);
   const collapsed = useStore((s) => s.collapsed);
   const toggleCollapsed = useStore((s) => s.toggleCollapsed);
-  const admin = useIsAdmin();
+  const { elevated } = useRole();
   const setProfileOpen = useStore((s) => s.setProfileOpen);
 
-  // Utilizatorul normal nu vede Setări.
-  const nav = admin ? NAV : NAV.filter((n) => n.id !== "set");
+  // Utilizatorul normal nu vede Setări (adminul şi managerul da).
+  const nav = elevated ? NAV : NAV.filter((n) => n.id !== "set");
 
   // Identitatea e automată: membrul al cărui email coincide cu contul logat.
   // S poate fi încă null cât timp se încarcă datele din Firestore — nu accesăm nimic pe null.

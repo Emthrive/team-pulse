@@ -2,11 +2,11 @@
 // ============================================================
 //  TASKURI — board Kanban (ca la Jira): coloane pe status,
 //  carduri compacte, click = modal cu detalii, drag & drop
-//  (userul doar taskurile lui, adminul pe toate).
+//  (userul doar taskurile lui, adminul şi managerul pe toate).
 // ============================================================
 import { useEffect, useState } from "react";
 import { moveTask } from "@/lib/actions";
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, STATUS } from "@/lib/constants";
 import { useStore } from "@/lib/store";
@@ -24,7 +24,7 @@ export function Tasks() {
   const flt = useStore((s) => s.flt);
   const setFlt = useStore((s) => s.setFlt);
   const resetFlt = useStore((s) => s.resetFlt);
-  const admin = useIsAdmin();
+  const { elevated } = useRole();
 
   const [detail, setDetail] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -44,9 +44,8 @@ export function Tasks() {
   // La deschidere, filtrul de membru vine preselectat cu userul curent —
   // mai puţin pentru admin şi manager, care văd toată echipa.
   const myId = currentMemberId(S, me, authEmail);
-  const isManager = !!(myId && mem(S, myId)?.platformRole === "manager");
   useEffect(() => {
-    if (!admin && !isManager && myId && !flt.member) setFlt({ member: myId });
+    if (!elevated && myId && !flt.member) setFlt({ member: myId });
     // rulează doar la montarea paginii
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -65,7 +64,7 @@ export function Tasks() {
       String(a.deadline || "9").localeCompare(String(b.deadline || "9")),
   );
 
-  const canDrag = (t: Task) => admin || (!!myId && t.assignee === myId);
+  const canDrag = (t: Task) => elevated || (!!myId && t.assignee === myId);
 
   const onDrop = (e: React.DragEvent, st: StatusId) => {
     e.preventDefault();

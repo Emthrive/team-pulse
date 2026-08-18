@@ -2,7 +2,7 @@
 // ============================================================
 //  ACȚIUNI DIRECTE (fără formular) — portate din original
 // ============================================================
-import { isAdminEmail } from "./admin";
+import { isElevated } from "./admin";
 import { currentMemberId, depName, memName, myDeptIds, taskProgress } from "./calc";
 import { prName, stName } from "./constants";
 import { seed } from "./seed";
@@ -85,10 +85,10 @@ export function renew(id: string) {
   });
 }
 
-/** Doar adminul sau membrii departamentului pot modifica un KPI manual. */
+/** Adminul/managerul peste tot; altfel doar membrii departamentului pot modifica un KPI manual. */
 function canEditKpiVals(S: import("./types").CrmState, deptId: string): boolean {
   const { me, authEmail } = st();
-  return isAdminEmail(authEmail) || myDeptIds(S, me, authEmail).includes(deptId);
+  return isElevated(S, me, authEmail) || myDeptIds(S, me, authEmail).includes(deptId);
 }
 
 export function bump(id: string, dir: number) {
@@ -119,14 +119,14 @@ export function setKpiVal(id: string, v: string) {
   });
 }
 
-/** Mutare pe board (drag & drop): userul doar taskurile lui, adminul pe toate. */
+/** Mutare pe board (drag & drop): userul doar taskurile lui, adminul şi managerul pe toate. */
 export function moveTask(id: string, newStatus: import("./types").StatusId) {
   const { S, me, authEmail } = st();
   if (!S) return;
   const t = S.tasks.find((x) => x.id === id);
   if (!t || t.status === newStatus) return;
   const myId = currentMemberId(S, me, authEmail);
-  const allowed = isAdminEmail(authEmail) || (myId && t.assignee === myId);
+  const allowed = isElevated(S, me, authEmail) || (myId && t.assignee === myId);
   if (!allowed) return;
   st().mutate((St) => {
     const tk = St.tasks.find((x) => x.id === id);

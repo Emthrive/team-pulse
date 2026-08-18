@@ -26,7 +26,8 @@ export interface Member {
   email?: string;
   /** Data primului login reușit — setat automat; ascunde butonul „Trimite link”. */
   activatedAt?: string;
-  /** Rol în platformă: gol = utilizator normal; „manager” — rezervat, fără atribuții încă. */
+  /** Rol în platformă: gol = utilizator normal; „manager” = ca adminul pe taskuri/KPI/Setări,
+   *  dar fără gestionarea utilizatorilor, fără ştergeri (KPI/departamente) şi fără zona de date. */
   platformRole?: "" | "manager";
   /** Poza de profil — data-URL JPEG 128×128, comprimată (limită dură la upload). */
   photo?: string;

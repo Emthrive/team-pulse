@@ -5,7 +5,7 @@
 // ============================================================
 import { useEffect, useState } from "react";
 import { addSub, finish, moveTask, renew, reopen, toggleSub } from "@/lib/actions";
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
@@ -18,7 +18,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   const S = useStore((s) => s.S)!;
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
-  const admin = useIsAdmin();
+  const { elevated } = useRole();
   const [subInput, setSubInput] = useState("");
 
   const t = S.tasks.find((x) => x.id === taskId);
@@ -29,7 +29,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   }, [t, onClose]);
   if (!t) return null;
 
-  const canEdit = admin || t.assignee === currentMemberId(S, me, authEmail);
+  const canEdit = elevated || t.assignee === currentMemberId(S, me, authEmail);
   const p = taskProgress(t);
   const late = isLate(t);
   const dl = daysLeft(t.deadline);

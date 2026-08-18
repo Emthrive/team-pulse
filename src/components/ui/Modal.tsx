@@ -44,6 +44,8 @@ export function Modal() {
         {form.note && <p className="mini" style={{ margin: "-8px 0 14px" }}>{form.note}</p>}
 
         {form.fields.map((fl) => {
+          // Câmp condiţionat (ex: departamentele dispar când rolul e Manager).
+          if (fl.showIf && !fl.showIf(data)) return null;
           const v = data[fl.key] ?? "";
           let ctl: React.ReactNode;
           if (fl.type === "select") {

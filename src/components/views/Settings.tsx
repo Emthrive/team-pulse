@@ -3,12 +3,14 @@
 //  SETĂRI (portat din viewSet)
 // ============================================================
 import { exportCsv, exportJson, importJson, resetAll } from "@/lib/actions";
+import { useRole } from "@/lib/admin";
 import { memName } from "@/lib/calc";
 import { editDept, editWeights, newDept } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 
 export function Settings() {
   const S = useStore((s) => s.S)!;
+  const { admin } = useRole();
   const W = S.weights;
 
   return (
@@ -51,30 +53,35 @@ export function Settings() {
         </button>
       </div>
 
-      <div className="sec">
-        <h2>Date</h2>
-        <span className="rule" />
-      </div>
-      <div className="card">
-        <p className="mini" style={{ margin: "0 0 12px", lineHeight: 1.55 }}>
-          Datele se salvează automat în Firebase şi sunt partajate: oricine deschide această
-          aplicaţie vede şi editează aceleaşi taskuri şi KPI. Fă un export periodic ca back-up.
-        </p>
-        <div className="row">
-          <button className="btn ghost sm" onClick={() => exportJson()}>
-            Export back-up (JSON)
-          </button>
-          <button className="btn ghost sm" onClick={() => exportCsv()}>
-            Export taskuri (CSV)
-          </button>
-          <button className="btn ghost sm" onClick={() => importJson()}>
-            Import back-up
-          </button>
-          <button className="btn danger sm" onClick={() => resetAll()}>
-            Resetează tot
-          </button>
-        </div>
-      </div>
+      {/* Zona de date (export/import/reset) — doar pentru admin. */}
+      {admin && (
+        <>
+          <div className="sec">
+            <h2>Date</h2>
+            <span className="rule" />
+          </div>
+          <div className="card">
+            <p className="mini" style={{ margin: "0 0 12px", lineHeight: 1.55 }}>
+              Datele se salvează automat în Firebase şi sunt partajate: oricine deschide această
+              aplicaţie vede şi editează aceleaşi taskuri şi KPI. Fă un export periodic ca back-up.
+            </p>
+            <div className="row">
+              <button className="btn ghost sm" onClick={() => exportJson()}>
+                Export back-up (JSON)
+              </button>
+              <button className="btn ghost sm" onClick={() => exportCsv()}>
+                Export taskuri (CSV)
+              </button>
+              <button className="btn ghost sm" onClick={() => importJson()}>
+                Import back-up
+              </button>
+              <button className="btn danger sm" onClick={() => resetAll()}>
+                Resetează tot
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="sec">
         <h2>Cum se calculează</h2>

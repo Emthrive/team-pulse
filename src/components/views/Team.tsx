@@ -2,7 +2,7 @@
 // ============================================================
 //  ECHIPĂ (portat din viewTeam)
 // ============================================================
-import { useIsAdmin } from "@/lib/admin";
+import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, memberDepts, memberStats, monthsInRange } from "@/lib/calc";
 import { editMember, evalMember, newMember } from "@/lib/forms";
 import { inviteUser } from "@/lib/invite";
@@ -23,7 +23,7 @@ export function Team() {
   const emonth = useStore((s) => s.emonth);
   const setFlt = useStore((s) => s.setFlt);
   const setTab = useStore((s) => s.setTab);
-  const admin = useIsAdmin();
+  const { admin, elevated } = useRole();
 
   const W = S.weights;
   const myId = currentMemberId(S, me, authEmail);
@@ -48,7 +48,7 @@ export function Team() {
         calitativă. Ponderile se schimbă în Setări.
       </p>
 
-      <div className="grid g3" style={{ marginTop: 14 }}>
+      <div className="grid g4" style={{ marginTop: 14 }}>
         {list.map(({ m, s }) => {
           const ev = S.evals.find((e) => e.member === m.id && e.month === emonth);
           return (
@@ -62,7 +62,9 @@ export function Team() {
                   </h4>
                   <div className="mini">{m.role || ""}</div>
                   <div className="mini">
-                    {memberDepts(m).map((id) => depName(S, id)).join(" · ") || "fără departament"}
+                    {m.platformRole === "manager"
+                      ? "toate departamentele"
+                      : memberDepts(m).map((id) => depName(S, id)).join(" · ") || "fără departament"}
                     {m.email ? " · " + m.email : " · fără email"}
                     {m.activatedAt && (
                       <span style={{ color: "var(--color-green)" }}> · activ</span>
@@ -99,7 +101,7 @@ export function Team() {
                 </p>
               )}
               <div className="row" style={{ marginTop: 12 }}>
-                {admin && (
+                {elevated && (
                   <button className="btn sm" onClick={() => evalMember(m.id)}>
                     {ev ? "Editează evaluarea" : "Evaluează"}
                   </button>
