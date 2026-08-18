@@ -3,8 +3,9 @@
 //  fără persoane și fără taskuri hardcodate (le adaugă echipa
 //  din platformă). Fără roster hardcodat.
 // ============================================================
+import { kpiAutoVal } from "./calc";
 import type { CrmState, Kpi, KpiDir } from "./types";
-import { uid } from "./utils";
+import { monthISO, uid } from "./utils";
 
 export function seed(): CrmState {
   const D = [
@@ -206,6 +207,35 @@ export function migrate(S: CrmState): boolean {
         t.archived = true;
         changed = true;
       }
+    });
+  }
+
+  // Snapshot lunar KPI (rulează mereu, idempotent): la închiderea unei luni, valorile
+  // auto se îngheaţă în k.vals — ştergerea/arhivarea taskurilor nu mai rescrie istoricul.
+  {
+    const cur = monthISO();
+    let [y, m] = cur.split("-").map(Number);
+    const past: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      m--;
+      if (m === 0) {
+        m = 12;
+        y--;
+      }
+      past.push(y + "-" + String(m).padStart(2, "0"));
+    }
+    S.kpis.forEach((k) => {
+      if (!k.auto) return;
+      k.vals = k.vals || {};
+      past.forEach((mm) => {
+        if (k.vals[mm] === undefined) {
+          const v = kpiAutoVal(S, k, mm);
+          if (v > 0) {
+            k.vals[mm] = v;
+            changed = true;
+          }
+        }
+      });
     });
   }
 

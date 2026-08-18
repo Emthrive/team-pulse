@@ -73,7 +73,7 @@ export function Kpi() {
   return (
     <>
       <div className="row" style={{ justifyContent: "space-between" }}>
-        <div className="filters" style={{ flex: 1, alignItems: "center" }}>
+        <div className="row" style={{ flex: 1 }}>
           <MonthRangePicker start={kstart} end={kend} onChange={setKRange} />
         </div>
         {admin && (

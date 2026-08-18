@@ -3,7 +3,7 @@
 // ============================================================
 import { CRIT } from "./constants";
 import type { CrmState, Kpi, Member, MemberStats, Task } from "./types";
-import { todayISO } from "./utils";
+import { monthISO, todayISO } from "./utils";
 
 export const dep = (S: CrmState, id: string) => S.departments.find((d) => d.id === id);
 export const mem = (S: CrmState, id: string) => S.members.find((m) => m.id === id);
@@ -96,7 +96,12 @@ export function kpiAutoVal(S: CrmState, k: Kpi, mth: string): number {
 }
 
 export function kpiVal(S: CrmState, k: Kpi, mth: string): number {
-  if (k.auto) return kpiAutoVal(S, k, mth);
+  if (k.auto) {
+    // Lunile închise folosesc snapshotul îngheţat (dacă există) — istoricul nu se
+    // mai schimbă retroactiv la ştergeri/arhivări de taskuri. Luna curentă e live.
+    if (mth < monthISO() && (k.vals || {})[mth] !== undefined) return Number(k.vals[mth]);
+    return kpiAutoVal(S, k, mth);
+  }
   return Number((k.vals || {})[mth] || 0);
 }
 export function kpiHas(S: CrmState, k: Kpi, mth: string): boolean {
@@ -151,7 +156,7 @@ export function kpiValRange(S: CrmState, k: Kpi, months: string[]): number {
     if (!comps.length) return 0;
     return Math.round((comps.filter((c) => c.onTime).length / comps.length) * 100);
   }
-  if (k.auto) return months.reduce((a, m) => a + kpiAutoVal(S, k, m), 0);
+  if (k.auto) return months.reduce((a, m) => a + kpiVal(S, k, m), 0);
   if (isRateKpi(k)) {
     const withVal = months.filter((m) => (k.vals || {})[m] !== undefined);
     if (!withVal.length) return 0;
