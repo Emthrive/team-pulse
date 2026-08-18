@@ -6,7 +6,6 @@ import { onlyMine, toggleSub } from "@/lib/actions";
 import { currentMemberId, deptKpi, deptProgress, depName, isLate, mem, memberStats, monthsInRange, taskProgress } from "@/lib/calc";
 import { useStore } from "@/lib/store";
 import { daysLeft } from "@/lib/utils";
-import { TaskCard } from "../TaskCard";
 import { Avatar, Bar, Ring } from "../ui/primitives";
 
 function MyBlock() {
@@ -106,8 +105,6 @@ export function Dash() {
     .sort((a, b) => (b.s.total ?? 0) - (a.s.total ?? 0))
     .slice(0, 6);
 
-  const urgent = [...late, ...soon].slice(0, 7);
-
   return (
     <>
       <div className="grid g2">
@@ -184,19 +181,6 @@ export function Dash() {
           );
         })}
       </div>
-
-      <div className="sec">
-        <h2>Necesită atenţie</h2>
-        <span className="rule" />
-        <button className="act" onClick={() => setTab("tasks")}>
-          toate →
-        </button>
-      </div>
-      {urgent.length ? (
-        urgent.map((t) => <TaskCard task={t} key={t.id} />)
-      ) : (
-        <div className="empty">Nimic urgent. Termenele sunt sub control.</div>
-      )}
 
       <div className="sec">
         <h2>Clasament echipă</h2>
