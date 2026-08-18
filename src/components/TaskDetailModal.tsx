@@ -10,6 +10,7 @@ import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/
 import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
+import type { StatusId } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
 import { Avatar, Bar } from "./ui/primitives";
 
@@ -93,19 +94,17 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
         {canEdit && (
           <div style={{ marginTop: 12 }}>
             <div className="lbl" style={{ marginBottom: 6 }}>Schimbă statusul</div>
-            <div className="stswitch">
+            <select
+              className="stselect"
+              value={t.status}
+              onChange={(e) => moveTask(t.id, e.target.value as StatusId)}
+            >
               {STATUS.map((st) => (
-                <button
-                  key={st.id}
-                  className={`stbtn ${t.status === st.id ? "on" : ""}`}
-                  onClick={() => {
-                    if (st.id !== t.status) moveTask(t.id, st.id);
-                  }}
-                >
+                <option key={st.id} value={st.id}>
                   {st.n}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
         )}
 

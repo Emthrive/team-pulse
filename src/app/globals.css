@@ -1342,24 +1342,15 @@ textarea {
    MOBIL: board vertical + comutator rapid de status
 ============================================================ */
 @layer components {
-  .stswitch {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .stbtn {
-    background: rgba(255, 255, 255, 0.05);
+  .stselect {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--line);
-    color: var(--color-muted);
-    border-radius: 99px;
-    padding: 7px 13px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-  .stbtn.on {
-    background: rgba(25, 200, 219, 0.16);
-    color: var(--color-turq);
-    border-color: var(--color-turq);
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 11px;
+    font-size: 14px;
+    font-weight: 600;
   }
 }
 
