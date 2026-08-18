@@ -12,7 +12,7 @@ async function sendLink(email: string) {
   const r = await inviteUser(email);
   alert(r.ok ? "Link de acces trimis către " + email + "." : "Nu s-a putut trimite: " + r.error);
 }
-import { Avatar, Bar, MonthPicker, Ring } from "../ui/primitives";
+import { Avatar, Bar, Ring } from "../ui/primitives";
 
 export function Team() {
   const S = useStore((s) => s.S)!;
@@ -21,7 +21,6 @@ export function Team() {
   const kstart = useStore((s) => s.kstart);
   const kend = useStore((s) => s.kend);
   const emonth = useStore((s) => s.emonth);
-  const setEMonth = useStore((s) => s.setEMonth);
   const setFlt = useStore((s) => s.setFlt);
   const setTab = useStore((s) => s.setTab);
   const admin = useIsAdmin();
@@ -36,16 +35,13 @@ export function Team() {
 
   return (
     <>
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <div className="filters" style={{ flex: 1 }}>
-          <MonthPicker value={emonth} onChange={setEMonth} />
-        </div>
-        {admin && (
+      {admin && (
+        <div className="row" style={{ justifyContent: "flex-end" }}>
           <button className="btn sm" onClick={() => newMember()}>
             + Persoană
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <p className="mini" style={{ margin: "10px 0 0" }}>
         Scor final = {W.exec}% execuţie taskuri + {W.kpi}% realizare KPI + {W.eval}% evaluare
