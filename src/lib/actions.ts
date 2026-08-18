@@ -6,11 +6,17 @@ import { isElevated } from "./admin";
 import { currentMemberId, depName, memName, myDeptIds, taskProgress } from "./calc";
 import { prName, stName } from "./constants";
 import { seed } from "./seed";
+import { logEvent } from "./history";
 import { useStore } from "./store";
 import type { CrmState } from "./types";
 import { todayISO, uid } from "./utils";
 
 const st = () => useStore.getState();
+/** Membrul curent — autorul evenimentelor din jurnal. */
+const actor = () => {
+  const { S, me, authEmail } = st();
+  return S ? currentMemberId(S, me, authEmail) : "";
+};
 
 export function toggleSub(tid: string, sid: string) {
   st().mutate((S) => {
@@ -27,14 +33,17 @@ export function toggleSub(tid: string, sid: string) {
 export function addSub(tid: string, value: string) {
   const v = value.trim();
   if (!v) return;
+  const by = actor();
   st().mutate((S) => {
     const t = S.tasks.find((x) => x.id === tid);
     if (!t) return;
     t.subtasks.push({ id: uid(), title: v, assignee: t.assignee || "", deadline: "", done: false });
+    logEvent(t, by, "subtask", v);
   });
 }
 
 export function finish(id: string) {
+  const by = actor();
   st().mutate((S) => {
     const t = S.tasks.find((x) => x.id === id);
     if (!t) return;
@@ -48,6 +57,7 @@ export function finish(id: string) {
       onTime: !t.deadline || todayISO() <= t.deadline,
       n: (t.subtasks || []).length,
     });
+    logEvent(t, by, "finalizat");
   });
 }
 
@@ -60,6 +70,7 @@ export function reopen(id: string) {
     t.archived = false;
     // Redeschis → finalizarea nu mai e valabilă; scoatem ultima intrare din jurnal.
     if (t.completions && t.completions.length) t.completions.pop();
+    logEvent(t, actor(), "redeschis");
   });
 }
 
@@ -82,6 +93,7 @@ export function renew(id: string) {
     t.status = "lucru";
     t.progress = 0;
     t.completedAt = "";
+    logEvent(t, actor(), "reinnoit");
   });
 }
 
@@ -149,6 +161,7 @@ export function moveTask(id: string, newStatus: import("./types").StatusId) {
       if (tk.completions && tk.completions.length) tk.completions.pop();
     }
     tk.status = newStatus;
+    logEvent(tk, myId, "status", stName(newStatus));
   });
 }
 
@@ -160,22 +173,26 @@ export function onlyMine() {
 
 /** Accept o asignare propusă → devin responsabil. */
 export function acceptAssignment(taskId: string) {
+  const by = actor();
   st().mutate((S) => {
     const t = S.tasks.find((x) => x.id === taskId);
     if (!t || !t.pendingAssignee) return;
     t.assignee = t.pendingAssignee;
     t.pendingAssignee = "";
     t.assignedBy = "";
+    logEvent(t, by, "acceptat");
   });
 }
 
 /** Refuz o asignare propusă → rămâne la responsabilul curent. */
 export function rejectAssignment(taskId: string) {
+  const by = actor();
   st().mutate((S) => {
     const t = S.tasks.find((x) => x.id === taskId);
     if (!t) return;
     t.pendingAssignee = "";
     t.assignedBy = "";
+    logEvent(t, by, "refuzat");
   });
 }
 

@@ -10,7 +10,8 @@ import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/
 import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
-import type { StatusId } from "@/lib/types";
+import { evText, fmtEvDate } from "@/lib/history";
+import type { StatusId, TaskEvent } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
 import { Avatar, Bar } from "./ui/primitives";
 
@@ -20,6 +21,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   const authEmail = useStore((s) => s.authEmail);
   const { elevated } = useRole();
   const [subInput, setSubInput] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
 
   const t = S.tasks.find((x) => x.id === taskId);
 
@@ -34,6 +36,10 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   const late = isLate(t);
   const dl = daysLeft(t.deadline);
   const subs = t.subtasks || [];
+  // Istoric: taskurile vechi (dinainte de jurnal) primesc o intrare sintetică de creare.
+  const hist: TaskEvent[] = [...(t.history || [])];
+  if (!hist.some((e) => e.k === "creat") && t.createdAt) hist.unshift({ d: t.createdAt, by: "", k: "creat" });
+  const histDesc = hist.slice().reverse(); // cele mai noi primele
   const assigneeMember = t.assignee ? mem(S, t.assignee) : undefined;
   const dlTxt = t.deadline
     ? fmtDate(t.deadline) +
@@ -90,6 +96,13 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
           </span>
         </div>
         <Bar pct={p} cls={late ? "red" : ""} />
+
+        {t.notes && (
+          <div style={{ marginTop: 12 }}>
+            <div className="lbl" style={{ marginBottom: 4 }}>Note</div>
+            <p className="mini" style={{ lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{t.notes}</p>
+          </div>
+        )}
 
         {canEdit && (
           <div style={{ marginTop: 12 }}>
@@ -158,10 +171,44 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
           </button>
         </div>
 
-        {t.notes && (
-          <p className="mini" style={{ marginTop: 12, lineHeight: 1.6 }}>
-            {t.notes}
-          </p>
+
+        {histDesc.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <button
+              className="btn ghost sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              onClick={() => setHistOpen((o) => !o)}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  transition: "transform .15s",
+                  transform: histOpen ? "rotate(90deg)" : "none",
+                }}
+              >
+                ▸
+              </span>
+              Istoric · {histDesc.length}
+            </button>
+            {histOpen && (
+              <div style={{ marginTop: 6 }}>
+                {histDesc.map((e, i) => (
+                  <div
+                    className="mini"
+                    key={e.d + ":" + i}
+                    style={{ display: "flex", gap: 8, padding: "3px 0", lineHeight: 1.5 }}
+                  >
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <b>{e.by ? memName(S, e.by) : "—"}</b> {evText(e)}
+                    </span>
+                    <span className="mono" style={{ color: "var(--color-muted)", whiteSpace: "nowrap" }}>
+                      {fmtEvDate(e.d)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         <div className="row" style={{ marginTop: 14 }}>

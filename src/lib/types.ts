@@ -51,6 +51,22 @@ export interface Completion {
   n?: number;
 }
 
+/** Tipurile de evenimente din jurnalul de activitate al unui task. */
+export type TaskEventKind =
+  | "creat" | "asignat" | "propus" | "acceptat" | "refuzat"
+  | "status" | "finalizat" | "redeschis" | "reinnoit" | "editat" | "subtask";
+
+/** Un eveniment din jurnalul taskului. */
+export interface TaskEvent {
+  /** Momentul (ISO cu oră). */
+  d: string;
+  /** Membrul care a făcut acțiunea ("" = necunoscut — ex. intrare sintetizată). */
+  by: string;
+  k: TaskEventKind;
+  /** Detaliu gata de afișat (nume status / persoană / câmpuri editate). */
+  v?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -72,6 +88,8 @@ export interface Task {
   completedAt: string;
   /** Jurnal de finalizări — sursa KPI-urilor automate (istoric corect lună de lună). */
   completions?: Completion[];
+  /** Jurnal de activitate — cine a creat/asignat/mutat/editat (plafonat). */
+  history?: TaskEvent[];
   /** Arhivat automat: în Finalizat de peste 30 de zile (de la ultima finalizare). */
   archived?: boolean;
 }

@@ -5,11 +5,12 @@
 //  folosind draft-ul de stare primit — fără referințe capturate.
 // ============================================================
 import { isAdminEmail, isElevated } from "./admin";
-import { currentMemberId, memberDepts, myDeptIds } from "./calc";
-import { CRIT, PRIO, STATUS } from "./constants";
+import { currentMemberId, memberDepts, memName, myDeptIds } from "./calc";
+import { CRIT, PRIO, STATUS, prName, stName } from "./constants";
+import { logEvent } from "./history";
 import { inviteUser } from "./invite";
 import type { CrmState, KpiAuto, Member, Task } from "./types";
-import { todayISO, uid } from "./utils";
+import { fmtDate, todayISO, uid } from "./utils";
 import { useStore, type FormField } from "./store";
 
 const st = () => useStore.getState();
@@ -179,15 +180,19 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
 /** Regula de asignare cu acceptare: propunerea către altcineva devine „pending". */
 function applyAssignment(tk: Task, chosen: string, selfId: string) {
   if (chosen === tk.assignee) return; // fără schimbare
+  const S = st().S;
+  const nameOf = (id: string) => (S ? memName(S, id) : id);
   if (chosen === "" || chosen === selfId) {
     // nealocat sau ție însuți → direct, fără acceptare
     tk.assignee = chosen;
     tk.pendingAssignee = "";
     tk.assignedBy = "";
+    logEvent(tk, selfId, "asignat", chosen ? nameOf(chosen) : "nealocat");
   } else {
     // propus altui utilizator → trebuie să accepte; responsabilul rămâne neschimbat
     tk.pendingAssignee = chosen;
     tk.assignedBy = selfId;
+    logEvent(tk, selfId, "propus", nameOf(chosen));
   }
 }
 
@@ -224,6 +229,7 @@ export function newTask() {
         createdAt: todayISO(),
         completedAt: "",
       };
+      logEvent(t, selfId, "creat");
       // Dacă la creare (ca admin) alegi alt responsabil, devine propunere (pending).
       applyAssignment(t, d.assignee, selfId);
       draft.tasks.push(t);
@@ -247,7 +253,20 @@ export function editTask(id: string) {
     onSubmit: (d, draft) => {
       const tk = draft.tasks.find((x) => x.id === id);
       if (!tk) return;
-      tk.title = d.title.trim() || tk.title;
+      // Ce s-a schimbat — pentru jurnalul de activitate (un singur eveniment pe salvare).
+      const newTitle = d.title.trim();
+      const newTags = mergeTags(d.tags, d.ttype || "", d.extags || "");
+      const changes: string[] = [];
+      if (newTitle && newTitle !== tk.title) changes.push("titlu");
+      if (d.dept !== tk.dept)
+        changes.push("departament → " + (draft.departments.find((x) => x.id === d.dept)?.n || "?"));
+      if (d.deadline !== tk.deadline) changes.push("termen → " + (d.deadline ? fmtDate(d.deadline) : "fără"));
+      if (d.priority !== tk.priority) changes.push("prioritate → " + prName(d.priority));
+      if (d.status !== tk.status) changes.push("status → " + stName(d.status));
+      if (newTags.join("|") !== (tk.tags || []).join("|")) changes.push("etichete");
+      if ((d.notes || "") !== (tk.notes || "")) changes.push("note");
+      if ((d.recurring || "") !== (tk.recurring || "")) changes.push("recurență");
+      tk.title = newTitle || tk.title;
       tk.dept = d.dept;
       // Reasignarea către alt utilizator devine propunere care trebuie acceptată.
       applyAssignment(tk, d.assignee, selfId);
@@ -258,9 +277,10 @@ export function editTask(id: string) {
       tk.status = d.status as Task["status"];
       // Progresul manual se actualizează doar dacă câmpul a fost prezent (task fără subtaskuri).
       if (d.progress !== undefined) tk.progress = Number(d.progress) || 0;
-      tk.tags = mergeTags(d.tags, d.ttype || "", d.extags || "");
+      tk.tags = newTags;
       tk.notes = d.notes;
       tk.recurring = (d.recurring || "") as Task["recurring"];
+      if (changes.length) logEvent(tk, selfId, "editat", changes.join(", "));
     },
     onDelete: (draft) => {
       draft.tasks = draft.tasks.filter((x) => x.id !== id);
