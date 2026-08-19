@@ -3,7 +3,7 @@
 //  CARD DE TASK (portat din taskCard)
 // ============================================================
 import { useState } from "react";
-import { addSub, finish, renew, reopen, toggleSub } from "@/lib/actions";
+import { addSub, finish, reopen, toggleSub } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
@@ -145,11 +145,6 @@ export function TaskCard({ task }: { task: Task }) {
             ) : (
               <button className="btn ghost sm" onClick={() => reopen(t.id)}>
                 Redeschid
-              </button>
-            )}
-            {t.recurring && (
-              <button className="btn ghost sm" onClick={() => renew(t.id)}>
-                Reînnoiesc ciclul
               </button>
             )}
             {canEdit && (

@@ -4,7 +4,7 @@
 //  toate informațiile + subtaskuri + acțiuni.
 // ============================================================
 import { useEffect, useState } from "react";
-import { addSub, finish, moveTask, renew, reopen, toggleSub } from "@/lib/actions";
+import { addSub, finish, moveTask, reopen, toggleSub } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
 import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
@@ -219,11 +219,6 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
           ) : (
             <button className="btn ghost sm" onClick={() => reopen(t.id)}>
               Redeschid
-            </button>
-          )}
-          {t.recurring && (
-            <button className="btn ghost sm" onClick={() => renew(t.id)}>
-              Reînnoiesc ciclul
             </button>
           )}
           {canEdit && (

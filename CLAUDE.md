@@ -13,6 +13,7 @@ Platformă internă de echipă/taskuri/KPI, „powered by Emthrive". Citește fi
 - Dev:   `npm run dev`   (Next pe :3000 — pornește-l prin preview_start, nu prin Bash)
 - Build: `npm run build` (NU rula cât timp dev rulează — strică `.next`)
 - Start: `npm start`   ·   Lint: `npm run lint`
+- Functions: `firebase deploy --only functions` (din rădăcină · cere Blaze · vezi `functions/README.md`)
 
 ## Hartă (mergi direct aici, nu căuta global)
 - `src/app/`            — pagini (App Router)
@@ -28,6 +29,8 @@ Platformă internă de echipă/taskuri/KPI, „powered by Emthrive". Citește fi
   - `calc.ts`       — matematica KPI/progres + snapshot-uri lunare
   - `seed.ts` `history.ts` `invite.ts` `users.ts` `firebase.ts` `utils.ts` `constants.ts`
   - `server/`       — cod strict server-side
+- `functions/`         — Cloud Functions (Firebase, deploy separat): `recurringTasks`
+                         clonează lunar taskurile recurente scadente · vezi `functions/README.md`
 
 ## Roluri
 admin (env `NEXT_PUBLIC_ADMIN_EMAILS`) > manager (`Member.platformRole === "manager"`)

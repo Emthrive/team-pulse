@@ -74,29 +74,6 @@ export function reopen(id: string) {
   });
 }
 
-export function renew(id: string) {
-  st().mutate((S) => {
-    const t = S.tasks.find((x) => x.id === id);
-    if (!t) return;
-    const shift = (d: string) => {
-      if (!d) return d;
-      const x = new Date(d + "T00:00:00");
-      if (t.recurring === "lunar") x.setMonth(x.getMonth() + 1);
-      else x.setDate(x.getDate() + 7);
-      return x.toISOString().slice(0, 10);
-    };
-    t.deadline = shift(t.deadline);
-    (t.subtasks || []).forEach((x) => {
-      x.done = false;
-      x.deadline = shift(x.deadline);
-    });
-    t.status = "lucru";
-    t.progress = 0;
-    t.completedAt = "";
-    logEvent(t, actor(), "reinnoit");
-  });
-}
-
 /** Adminul/managerul peste tot; altfel doar membrii departamentului pot modifica un KPI manual. */
 function canEditKpiVals(S: import("./types").CrmState, deptId: string): boolean {
   const { me, authEmail } = st();
