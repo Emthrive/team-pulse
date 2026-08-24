@@ -5,13 +5,13 @@
 import { useState } from "react";
 import { addSub, finish, reopen, toggleSub } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
-import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
+import { currentMemberId, depName, isLate, mem, memName } from "@/lib/calc";
 import { prCls, prName, stCls, stName } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
-import { Avatar, Bar } from "./ui/primitives";
+import { Avatar } from "./ui/primitives";
 
 export function TaskCard({ task }: { task: Task }) {
   const S = useStore((s) => s.S)!;
@@ -26,7 +26,6 @@ export function TaskCard({ task }: { task: Task }) {
   const canEdit = elevated || task.assignee === currentMemberId(S, me, authEmail);
 
   const t = task;
-  const p = taskProgress(t);
   const late = isLate(t);
   const dl = daysLeft(t.deadline);
   const subs = t.subtasks || [];
@@ -74,13 +73,14 @@ export function TaskCard({ task }: { task: Task }) {
         <Avatar name={t.assignee ? memName(S, t.assignee) : null} photo={t.assignee ? mem(S, t.assignee)?.photo : undefined} />
       </div>
 
-      <div style={{ marginTop: 10 }} className="row">
-        <div style={{ flex: 1, minWidth: 80 }}>
-          <Bar pct={p} cls={late ? "red" : ""} />
+      <div style={{ marginTop: 10, alignItems: "flex-start" }} className="row">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {!open && t.notes && (
+            <p className="note-preview" style={{ margin: 0 }}>
+              {t.notes}
+            </p>
+          )}
         </div>
-        <span className="mono" style={{ fontSize: 11.5, fontWeight: 600, color: "var(--color-muted)" }}>
-          {p}%
-        </span>
         <button className="btn ghost sm" onClick={() => toggleOpen(t.id)}>
           {open ? "▲" : "▼"}
         </button>
