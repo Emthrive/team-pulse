@@ -49,5 +49,5 @@ admin (env `NEXT_PUBLIC_ADMIN_EMAILS`) > manager (`Member.platformRole === "mana
 - Consultă harta de mai sus înainte să deschizi fișiere „pe ghicite".
 
 ## Reguli de proiect (standing)
-- Push/commit DOAR când cere userul explicit. Deploy: auto pe Vercel la push pe `main`.
+- Push/commit DOAR când cere userul explicit.
 - Secrete doar în `.env.local` (gitignored). Cheia Firebase Admin: TODO de rotit.
