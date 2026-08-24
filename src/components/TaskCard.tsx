@@ -73,6 +73,7 @@ export function TaskCard({ task }: { task: Task }) {
         <Avatar name={t.assignee ? memName(S, t.assignee) : null} photo={t.assignee ? mem(S, t.assignee)?.photo : undefined} />
       </div>
 
+      {/* Nota taskului în locul barei de progres: preview alb, max 3 rânduri; completă la desfășurare */}
       <div style={{ marginTop: 10, alignItems: "flex-start" }} className="row">
         <div style={{ flex: 1, minWidth: 0 }}>
           {!open && t.notes && (
