@@ -14,6 +14,7 @@ import type { PriorityId, StatusId, Task } from "@/lib/types";
 import { fmtDate } from "@/lib/utils";
 import { TaskDetailModal } from "../TaskDetailModal";
 import { Avatar } from "../ui/primitives";
+import { NoteBlock } from "../NoteBlock";
 
 const order: Record<PriorityId, number> = { critica: 0, ridicata: 1, medie: 2, scazuta: 3 };
 
@@ -184,11 +185,7 @@ export function Tasks() {
                       </div>
                       <div className="kc-foot" style={{ alignItems: "flex-start" }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          {t.notes && (
-                            <p className="note-preview" style={{ margin: 0 }}>
-                              {t.notes}
-                            </p>
-                          )}
+                          <NoteBlock notes={t.notes} clamp />
                         </div>
                         <Avatar name={am ? am.n : memName(S, t.assignee)} photo={am?.photo} />
                       </div>

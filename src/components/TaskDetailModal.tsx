@@ -6,14 +6,15 @@
 import { useEffect, useState } from "react";
 import { addSub, finish, moveTask, reopen, toggleSub } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
-import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
+import { currentMemberId, depName, mem, memName } from "@/lib/calc";
 import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { evText, fmtEvDate } from "@/lib/history";
 import type { StatusId, TaskEvent } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
-import { Avatar, Bar } from "./ui/primitives";
+import { Avatar } from "./ui/primitives";
+import { NoteBlock } from "./NoteBlock";
 
 export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const S = useStore((s) => s.S)!;
@@ -32,8 +33,6 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   if (!t) return null;
 
   const canEdit = elevated || t.assignee === currentMemberId(S, me, authEmail);
-  const p = taskProgress(t);
-  const late = isLate(t);
   const dl = daysLeft(t.deadline);
   const subs = t.subtasks || [];
   // Istoric: taskurile vechi (dinainte de jurnal) primesc o intrare sintetică de creare.
@@ -91,18 +90,9 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
               </div>
             )}
           </div>
-          <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--color-muted)" }}>
-            {p}%
-          </span>
         </div>
-        <Bar pct={p} cls={late ? "red" : ""} />
 
-        {t.notes && (
-          <div style={{ marginTop: 12 }}>
-            <div className="lbl" style={{ marginBottom: 4 }}>Note</div>
-            <p className="mini" style={{ lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{t.notes}</p>
-          </div>
-        )}
+        <NoteBlock notes={t.notes} style={{ marginTop: 12 }} />
 
         {canEdit && (
           <div style={{ marginTop: 12 }}>
