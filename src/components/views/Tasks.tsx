@@ -109,7 +109,7 @@ export function Tasks() {
 
       <div className="kanban">
         {STATUS.map((st) => {
-          // Finalizat: implicit doar cele recente; arhiva (30+ zile) e pe comutator.
+          // Finalizat: implicit doar cele recente; arhiva (7+ zile) e pe comutator.
           const archivedCount =
             st.id === "gata" ? ts.filter((t) => t.status === "gata" && t.archived).length : 0;
           const items = ts.filter(
@@ -136,7 +136,7 @@ export function Tasks() {
                   <button
                     className={`karh ${showArchived ? "on" : ""}`}
                     onClick={() => setShowArchived(!showArchived)}
-                    title={showArchived ? "Înapoi la cele recente" : "Vezi taskurile arhivate (30+ zile)"}
+                    title={showArchived ? "Înapoi la cele recente" : "Vezi taskurile arhivate (7+ zile)"}
                   >
                     {showArchived ? "recente" : `arhivă (${archivedCount})`}
                   </button>

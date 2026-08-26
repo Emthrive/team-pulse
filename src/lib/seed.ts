@@ -198,10 +198,10 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
-  // Arhivare automată (rulează mereu, idempotent): în Finalizat de peste 30 de zile
+  // Arhivare automată (rulează mereu, idempotent): în Finalizat de peste 7 zile
   // de la ULTIMA finalizare (completedAt se resetează la reopen → cronometrul repornește).
   {
-    const cutoff = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    const cutoff = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
     (S.tasks || []).forEach((t) => {
       if (t.status === "gata" && !t.archived && t.completedAt && t.completedAt <= cutoff) {
         t.archived = true;

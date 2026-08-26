@@ -227,6 +227,11 @@ export function memberStats(
   const done = ts.filter((t) => t.status === "gata");
   const active = ts.filter((t) => t.status !== "gata");
   const late = active.filter(isLate);
+  // Taskuri finalizate în luna selectată (jurnalul de completions supraviețuiește arhivării).
+  const doneMonth = ts.reduce(
+    (n, t) => n + (t.completions || []).filter((c) => c.d.slice(0, 7) === emonth).length,
+    0,
+  );
   const onTime = done.filter(
     (t) => !t.deadline || !t.completedAt || t.completedAt <= t.deadline,
   ).length;
@@ -279,6 +284,7 @@ export function memberStats(
     tasks: ts.length,
     active: active.length,
     done: done.length,
+    doneMonth,
     late: late.length,
     exec,
     kpi: kp,

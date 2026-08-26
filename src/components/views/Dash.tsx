@@ -3,10 +3,10 @@
 //  PANOU (portat din viewDash + myBlock)
 // ============================================================
 import { onlyMine, toggleSub } from "@/lib/actions";
-import { currentMemberId, deptKpi, deptProgress, depName, isLate, mem, memberStats, monthsInRange, taskProgress } from "@/lib/calc";
+import { currentMemberId, depName, isLate, mem, memberStats, monthsInRange } from "@/lib/calc";
 import { useStore } from "@/lib/store";
 import { daysLeft } from "@/lib/utils";
-import { Avatar, Bar, Ring } from "../ui/primitives";
+import { Avatar } from "../ui/primitives";
 
 function MyBlock() {
   const S = useStore((s) => s.S)!;
@@ -56,7 +56,12 @@ function MyBlock() {
               ) : null}
             </div>
           </div>
-          <Ring pct={stt.total === null ? 0 : stt.total} />
+          <div style={{ textAlign: "center", minWidth: 46 }}>
+            <div style={{ fontWeight: 800, fontSize: 22, color: "var(--color-turq)" }}>
+              {stt.doneMonth}
+            </div>
+            <div className="lbl">luna asta</div>
+          </div>
         </div>
         {subs.slice(0, 6).map((x) => (
           <div className="sub" key={x.sid}>
@@ -94,31 +99,29 @@ export function Dash() {
     return d !== null && d >= 0 && d <= 7;
   });
   const gata = ts.filter((t) => t.status === "gata").length;
-  const gen = ts.length
-    ? Math.round(ts.reduce((a, t) => a + taskProgress(t), 0) / ts.length)
-    : 0;
+  const archived = ts.filter((t) => t.archived).length;
 
-  // Toţi colegii activi apar în clasament — fără date de scor încă = 0.
+  // Clasament după câte taskuri a finalizat fiecare (motivează folosirea platformei).
   const board = S.members
     .filter((m) => m.active)
     .map((m) => ({ m, s: memberStats(S, m.id, kmonths, emonth) }))
-    .sort((a, b) => (b.s.total ?? 0) - (a.s.total ?? 0))
+    .sort((a, b) => b.s.doneMonth - a.s.doneMonth || a.m.n.localeCompare(b.m.n))
     .slice(0, 6);
 
   return (
     <>
       <div className="grid g2">
         <div className="card">
-          <div className="lbl">Progres general</div>
+          <div className="lbl">Taskuri finalizate</div>
           <div className="big" style={{ color: "var(--color-turq)" }}>
-            {gen}%
+            {gata}
           </div>
-          <Bar pct={gen} />
+          <div className="mini">{archived} arhivate</div>
         </div>
         <div className="card">
           <div className="lbl">Taskuri active</div>
           <div className="big">{act.length}</div>
-          <div className="mini">{gata} finalizate</div>
+          <div className="mini">din {ts.length} în total</div>
         </div>
         <div className="card">
           <div className="lbl">Întârziate</div>
@@ -144,10 +147,9 @@ export function Dash() {
       </div>
       <div className="grid g3">
         {S.departments.map((d) => {
-          const p = deptProgress(S, d.id);
-          const k = deptKpi(S, d.id, kmonths);
           const n = S.tasks.filter((t) => t.dept === d.id && t.status !== "gata").length;
           const l = S.tasks.filter((t) => t.dept === d.id && isLate(t)).length;
+          const doneD = S.tasks.filter((t) => t.dept === d.id && t.status === "gata").length;
           return (
             <div
               className="card"
@@ -171,12 +173,13 @@ export function Dash() {
                     </div>
                   )}
                 </div>
-                <Ring pct={p} />
+                <div style={{ textAlign: "center", minWidth: 44 }}>
+                  <div style={{ fontWeight: 800, fontSize: 22, color: "var(--color-turq)" }}>
+                    {doneD}
+                  </div>
+                  <div className="lbl">finalizate</div>
+                </div>
               </div>
-              <div style={{ marginTop: 11 }} className="lbl">
-                Realizare KPI {k === null ? "—" : k + "%"}
-              </div>
-              <Bar pct={k || 0} cls="gold" />
             </div>
           );
         })}
@@ -208,21 +211,21 @@ export function Dash() {
                     fontWeight: 800,
                     fontSize: 16,
                     color:
-                      (x.s.total ?? 0) >= 80
-                        ? "var(--color-green)"
-                        : (x.s.total ?? 0) >= 50
-                          ? "var(--color-turq)"
-                          : "var(--color-red)",
+                      x.s.doneMonth === 0
+                        ? "var(--color-muted)"
+                        : i === 0
+                          ? "var(--color-green)"
+                          : "var(--color-turq)",
                   }}
                 >
-                  {x.s.total ?? 0}
+                  {x.s.doneMonth}
                 </div>
-                <div className="mini">scor</div>
+                <div className="mini">luna asta</div>
               </div>
             </div>
           ))
         ) : (
-          <div className="mini">Adaugă taskuri şi KPI pentru a genera scoruri.</div>
+          <div className="mini">Adaugă taskuri ca să pornească clasamentul.</div>
         )}
       </div>
     </>

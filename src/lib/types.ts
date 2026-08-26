@@ -90,7 +90,7 @@ export interface Task {
   completions?: Completion[];
   /** Jurnal de activitate — cine a creat/asignat/mutat/editat (plafonat). */
   history?: TaskEvent[];
-  /** Arhivat automat: în Finalizat de peste 30 de zile (de la ultima finalizare). */
+  /** Arhivat automat: în Finalizat de peste 7 zile (de la ultima finalizare). */
   archived?: boolean;
 }
 
@@ -140,6 +140,8 @@ export interface MemberStats {
   tasks: number;
   active: number;
   done: number;
+  /** Taskuri finalizate în luna selectată (din jurnalul de completions). */
+  doneMonth: number;
   late: number;
   exec: number | null;
   kpi: number | null;

@@ -12,7 +12,7 @@ async function sendLink(email: string) {
   const r = await inviteUser(email);
   alert(r.ok ? "Link de acces trimis către " + email + "." : "Nu s-a putut trimite: " + r.error);
 }
-import { Avatar, Bar, Ring } from "../ui/primitives";
+import { Avatar, Bar } from "../ui/primitives";
 
 export function Team() {
   const S = useStore((s) => s.S)!;
@@ -25,13 +25,12 @@ export function Team() {
   const setTab = useStore((s) => s.setTab);
   const { admin, elevated } = useRole();
 
-  const W = S.weights;
   const myId = currentMemberId(S, me, authEmail);
 
   const list = S.members
     .filter((m) => m.active)
     .map((m) => ({ m, s: memberStats(S, m.id, monthsInRange(kstart, kend), emonth) }))
-    .sort((a, b) => (b.s.total === null ? -1 : b.s.total) - (a.s.total === null ? -1 : a.s.total));
+    .sort((a, b) => b.s.doneMonth - a.s.doneMonth || a.m.n.localeCompare(b.m.n));
 
   return (
     <>
@@ -42,11 +41,6 @@ export function Team() {
           </button>
         </div>
       )}
-
-      <p className="mini" style={{ margin: "10px 0 0" }}>
-        Scor final = {W.exec}% execuţie taskuri + {W.kpi}% realizare KPI + {W.eval}% evaluare
-        calitativă. Ponderile se schimbă în Setări.
-      </p>
 
       <div className="grid g4" style={{ marginTop: 14 }}>
         {list.map(({ m, s }) => {
@@ -71,18 +65,21 @@ export function Team() {
                     )}
                   </div>
                 </div>
-                <Ring pct={s.total === null ? 0 : s.total} />
+                <div style={{ textAlign: "center", minWidth: 46 }}>
+                  <div style={{ fontWeight: 800, fontSize: 22, color: "var(--color-turq)" }}>
+                    {s.doneMonth}
+                  </div>
+                  <div className="lbl">luna asta</div>
+                </div>
               </div>
               <div className="grid g2" style={{ marginTop: 12 }}>
                 <div>
-                  <div className="lbl">Execuţie</div>
-                  <div style={{ fontWeight: 800 }}>{s.exec === null ? "—" : s.exec + "%"}</div>
-                  <Bar pct={s.exec || 0} />
+                  <div className="lbl">Taskuri luna asta</div>
+                  <div style={{ fontWeight: 800, fontSize: 20 }}>{s.doneMonth}</div>
                 </div>
                 <div>
-                  <div className="lbl">KPI</div>
-                  <div style={{ fontWeight: 800 }}>{s.kpi === null ? "—" : s.kpi + "%"}</div>
-                  <Bar pct={s.kpi || 0} cls="gold" />
+                  <div className="lbl">Taskuri total</div>
+                  <div style={{ fontWeight: 800, fontSize: 20 }}>{s.done}</div>
                 </div>
               </div>
               <div style={{ marginTop: 10 }}>
