@@ -7,13 +7,13 @@
 import { useEffect, useState } from "react";
 import { moveTask } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
-import { currentMemberId, depName, isLate, mem, memName, taskProgress } from "@/lib/calc";
+import { currentMemberId, depName, isLate, mem, memName } from "@/lib/calc";
 import { prCls, prName, STATUS } from "@/lib/constants";
 import { useStore } from "@/lib/store";
 import type { PriorityId, StatusId, Task } from "@/lib/types";
 import { fmtDate } from "@/lib/utils";
 import { TaskDetailModal } from "../TaskDetailModal";
-import { Avatar, Bar } from "../ui/primitives";
+import { Avatar } from "../ui/primitives";
 
 const order: Record<PriorityId, number> = { critica: 0, ridicata: 1, medie: 2, scazuta: 3 };
 
@@ -145,7 +145,6 @@ export function Tasks() {
               </div>
               <div className="kcol-body">
                 {items.map((t) => {
-                  const p = taskProgress(t);
                   const late = isLate(t);
                   const am = t.assignee ? mem(S, t.assignee) : undefined;
                   const draggable = canDrag(t) && !isMobile;
@@ -183,11 +182,14 @@ export function Tasks() {
                         )}
                         {t.archived && <span className="chip">arhivat</span>}
                       </div>
-                      <div className="kc-foot">
+                      <div className="kc-foot" style={{ alignItems: "flex-start" }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <Bar pct={p} cls={late ? "red" : ""} />
+                          {t.notes && (
+                            <p className="note-preview" style={{ margin: 0 }}>
+                              {t.notes}
+                            </p>
+                          )}
                         </div>
-                        <span className="mini mono">{p}%</span>
                         <Avatar name={am ? am.n : memName(S, t.assignee)} photo={am?.photo} />
                       </div>
                     </div>
