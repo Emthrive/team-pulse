@@ -1,0 +1,3 @@
+## Serviciu intern — nu indexăm nimic, fără crawlers.
+User-agent: *
+Disallow: /
