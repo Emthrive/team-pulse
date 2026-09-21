@@ -26,7 +26,6 @@ export const CRIT: { id: string; n: string }[] = [
 ];
 
 export const TABS: { id: TabId; n: string }[] = [
-  { id: "dash", n: "Panou" },
   { id: "tasks", n: "Taskuri" },
   { id: "kpi", n: "KPI" },
   { id: "team", n: "Echipă" },

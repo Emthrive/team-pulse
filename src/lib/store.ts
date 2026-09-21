@@ -120,7 +120,7 @@ export const useStore = create<Store>((set, get) => {
     sync: "ok",
     loaded: false,
 
-    tab: "dash",
+    tab: "tasks",
     open: {},
     flt: { ...emptyFlt },
     kstart: monthISO(),

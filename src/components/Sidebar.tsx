@@ -5,7 +5,6 @@
 import { signOut } from "firebase/auth";
 import {
   Bell,
-  LayoutDashboard,
   ListChecks,
   LogOut,
   PanelLeftClose,
@@ -24,7 +23,6 @@ import type { TabId } from "@/lib/types";
 import { LogoMark, Wordmark } from "./Brand";
 
 const NAV: { id: TabId; n: string; Icon: LucideIcon }[] = [
-  { id: "dash", n: "Panou", Icon: LayoutDashboard },
   { id: "tasks", n: "Taskuri", Icon: ListChecks },
   { id: "kpi", n: "KPI", Icon: Target },
   { id: "team", n: "Echipă", Icon: Users },

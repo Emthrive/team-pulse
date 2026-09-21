@@ -10,7 +10,6 @@ import { currentMemberId, mem } from "@/lib/calc";
 import { ProfileModal } from "./ProfileModal";
 import { Sidebar } from "./Sidebar";
 import { Modal } from "./ui/Modal";
-import { Dash } from "./views/Dash";
 import { Kpi } from "./views/Kpi";
 import { Notifications } from "./views/Notifications";
 import { Settings } from "./views/Settings";
@@ -58,10 +57,10 @@ export function Crm() {
     }
   }, [S, authEmail, mutate]);
 
-  // Setări e doar pentru admin/manager; dacă un user normal ajunge cumva pe „set”, cade pe Panou.
-  const activeTab = tab === "set" && !elevated ? "dash" : tab;
+  // Setări e doar pentru admin/manager; dacă un user normal ajunge cumva pe „set”, cade pe Taskuri.
+  const activeTab = tab === "set" && !elevated ? "tasks" : tab;
   // Oricine autentificat îşi poate crea taskuri.
-  const showFab = activeTab === "tasks" || activeTab === "dash";
+  const showFab = activeTab === "tasks";
 
   return (
     <div className="shell">
@@ -70,8 +69,6 @@ export function Crm() {
         <main className="app-main">
           {!loaded || !S ? (
             <div className="empty">Se încarcă…</div>
-          ) : activeTab === "dash" ? (
-            <Dash />
           ) : activeTab === "tasks" ? (
             <Tasks />
           ) : activeTab === "kpi" ? (

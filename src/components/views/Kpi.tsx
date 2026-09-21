@@ -9,6 +9,7 @@ import { useRole } from "@/lib/admin";
 import {
   depName,
   deptKpi,
+  isLate,
   kpiHas,
   kpiScore,
   kpiScoreRange,
@@ -16,16 +17,17 @@ import {
   kpiVal,
   kpiValRange,
   memName,
+  memberStats,
   monthsInRange,
   myDeptIds,
 } from "@/lib/calc";
 import { MONTH_NAMES } from "@/lib/constants";
 import { editKpi, newKpi } from "@/lib/forms";
 import { useStore } from "@/lib/store";
-import { fmtNum, lastMonths } from "@/lib/utils";
+import { daysLeft, fmtNum, lastMonths } from "@/lib/utils";
 import { DeptBars, Spark, TrendLine } from "../charts/KpiCharts";
 import { MonthRangePicker } from "../ui/MonthRangePicker";
-import { Bar } from "../ui/primitives";
+import { Avatar, Bar } from "../ui/primitives";
 
 const AUTO_LABEL: Record<string, string> = {
   tasks_done: "taskuri finalizate",
@@ -43,7 +45,9 @@ export function Kpi() {
   const authEmail = useStore((s) => s.authEmail);
   const kstart = useStore((s) => s.kstart);
   const kend = useStore((s) => s.kend);
+  const emonth = useStore((s) => s.emonth);
   const setKRange = useStore((s) => s.setKRange);
+  const setTab = useStore((s) => s.setTab);
   const { elevated } = useRole();
   // Valorile manuale pot fi modificate doar de membrii departamentului (adminul şi managerul peste tot).
   const myDepts = myDeptIds(S, me, authEmail);
@@ -70,8 +74,97 @@ export function Kpi() {
     return { m: monthLabel(m), pct };
   });
 
+  // Sumar taskuri + clasament (mutate de pe fostul Panou).
+  const ts = S.tasks;
+  const act = ts.filter((t) => t.status !== "gata");
+  const late = act.filter(isLate);
+  const soon = act.filter((t) => {
+    const d = daysLeft(t.deadline);
+    return d !== null && d >= 0 && d <= 7;
+  });
+  const gata = ts.filter((t) => t.status === "gata").length;
+  const archived = ts.filter((t) => t.archived).length;
+  const board = S.members
+    .filter((m) => m.active)
+    .map((m) => ({ m, s: memberStats(S, m.id, range, emonth) }))
+    .sort((a, b) => b.s.doneMonth - a.s.doneMonth || a.m.n.localeCompare(b.m.n))
+    .slice(0, 6);
+
   return (
     <>
+      <div className="sec">
+        <h2>Clasament echipă</h2>
+        <span className="rule" />
+        <button className="act" onClick={() => setTab("team")}>
+          evaluări →
+        </button>
+      </div>
+      <div className="card">
+        {board.length ? (
+          board.map((x, i) => (
+            <div className="lead" key={x.m.id}>
+              <div className="rank">{i + 1}</div>
+              <Avatar name={x.m.n} photo={x.m.photo} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5 }}>{x.m.n}</div>
+                <div className="mini">
+                  {depName(S, x.m.dept)} · {x.s.active} active
+                  {x.s.late ? " · " + x.s.late + " întârziate" : ""}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 16,
+                    color:
+                      x.s.doneMonth === 0
+                        ? "var(--color-muted)"
+                        : i === 0
+                          ? "var(--color-green)"
+                          : "var(--color-turq)",
+                  }}
+                >
+                  {x.s.doneMonth}
+                </div>
+                <div className="mini">luna asta</div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="mini">Adaugă taskuri ca să pornească clasamentul.</div>
+        )}
+      </div>
+
+      <div className="grid g2" style={{ marginTop: 14 }}>
+        <div className="card">
+          <div className="lbl">Taskuri finalizate</div>
+          <div className="big" style={{ color: "var(--color-turq)" }}>
+            {gata}
+          </div>
+          <div className="mini">{archived} arhivate</div>
+        </div>
+        <div className="card">
+          <div className="lbl">Taskuri active</div>
+          <div className="big">{act.length}</div>
+          <div className="mini">din {ts.length} în total</div>
+        </div>
+        <div className="card">
+          <div className="lbl">Întârziate</div>
+          <div className="big" style={{ color: "var(--color-red)" }}>
+            {late.length}
+          </div>
+          <div className="mini">necesită acţiune</div>
+        </div>
+        <div className="card">
+          <div className="lbl">Scadente în 7 zile</div>
+          <div className="big" style={{ color: "var(--color-gold)" }}>
+            {soon.length}
+          </div>
+          <div className="mini">săptămâna asta</div>
+        </div>
+      </div>
+
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div className="row" style={{ flex: 1 }}>
           <MonthRangePicker start={kstart} end={kend} onChange={setKRange} />
