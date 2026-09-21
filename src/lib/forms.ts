@@ -201,10 +201,11 @@ export function newTask() {
   const self = selfMember ? { id: selfMember.id, dept: memberDepts(selfMember)[0] || selfMember.dept } : undefined;
   const elev = isElevated(S, me, authEmail); // admin sau manager
   const deptChoices = !elev && selfMember ? memberDepts(selfMember) : undefined;
-  const lockAssignee = !elev && selfMember ? selfMember.id : undefined;
+  // Oricine poate pune responsabil pe oricine la creare; propunerea către
+  // altă persoană devine „pending" și rămâne pe creator până se acceptă.
   openForm({
     title: "Task nou",
-    fields: taskFields(S, null, flt.dept, { self, deptChoices, lockAssignee, forNew: true }),
+    fields: taskFields(S, null, flt.dept, { self, deptChoices, forNew: true }),
     onSubmit: (d, draft) => {
       if (!d.title.trim()) return;
       const t: Task = {
