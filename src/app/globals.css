@@ -48,7 +48,6 @@ body {
   font-size: 15px;
   line-height: 1.45;
   min-height: 100vh;
-  padding-bottom: 70px;
 }
 
 h1,
@@ -181,7 +180,9 @@ textarea {
   }
 
   .app-main {
-    padding: 16px 18px 40px;
+    /* Clearance-ul de jos (pentru butonul „+" fix) stă AICI, în zona scrollabilă —
+       nu pe body cu min-height:100vh, care ar adăuga scroll pe orice pagină. */
+    padding: 16px 18px 84px;
     max-width: none;
   }
 
