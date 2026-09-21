@@ -99,7 +99,37 @@ export function Kpi() {
           evaluări →
         </button>
       </div>
-      <div className="card">
+
+      <div className="grid g2" style={{ marginTop: 12 }}>
+        <div className="card">
+          <div className="lbl">Taskuri finalizate</div>
+          <div className="big" style={{ color: "var(--color-turq)" }}>
+            {gata}
+          </div>
+          <div className="mini">{archived} arhivate</div>
+        </div>
+        <div className="card">
+          <div className="lbl">Taskuri active</div>
+          <div className="big">{act.length}</div>
+          <div className="mini">din {ts.length} în total</div>
+        </div>
+        <div className="card">
+          <div className="lbl">Întârziate</div>
+          <div className="big" style={{ color: "var(--color-red)" }}>
+            {late.length}
+          </div>
+          <div className="mini">necesită acţiune</div>
+        </div>
+        <div className="card">
+          <div className="lbl">Scadente în 7 zile</div>
+          <div className="big" style={{ color: "var(--color-gold)" }}>
+            {soon.length}
+          </div>
+          <div className="mini">săptămâna asta</div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 14 }}>
         {board.length ? (
           board.map((x, i) => (
             <div className="lead" key={x.m.id}>
@@ -134,35 +164,6 @@ export function Kpi() {
         ) : (
           <div className="mini">Adaugă taskuri ca să pornească clasamentul.</div>
         )}
-      </div>
-
-      <div className="grid g2" style={{ marginTop: 14 }}>
-        <div className="card">
-          <div className="lbl">Taskuri finalizate</div>
-          <div className="big" style={{ color: "var(--color-turq)" }}>
-            {gata}
-          </div>
-          <div className="mini">{archived} arhivate</div>
-        </div>
-        <div className="card">
-          <div className="lbl">Taskuri active</div>
-          <div className="big">{act.length}</div>
-          <div className="mini">din {ts.length} în total</div>
-        </div>
-        <div className="card">
-          <div className="lbl">Întârziate</div>
-          <div className="big" style={{ color: "var(--color-red)" }}>
-            {late.length}
-          </div>
-          <div className="mini">necesită acţiune</div>
-        </div>
-        <div className="card">
-          <div className="lbl">Scadente în 7 zile</div>
-          <div className="big" style={{ color: "var(--color-gold)" }}>
-            {soon.length}
-          </div>
-          <div className="mini">săptămâna asta</div>
-        </div>
       </div>
 
       <div className="row" style={{ justifyContent: "space-between" }}>
