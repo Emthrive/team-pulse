@@ -425,16 +425,21 @@ function memberFields(S: CrmState, m: Member | null): FormField[] {
       // Managerul are acces peste tot — nu ţine de un departament.
       showIf: (d) => (d.platformRole || "") !== "manager",
     },
-    {
-      key: "active",
-      label: "Stare",
-      type: "select",
-      value: m ? (m.active ? "1" : "0") : "1",
-      options: [
-        { v: "1", l: "Activ" },
-        { v: "0", l: "Inactiv" },
-      ],
-    },
+    // „Stare" (Activ/Inactiv) apare doar la editare — o persoană nouă e mereu activă.
+    ...(m
+      ? ([
+          {
+            key: "active",
+            label: "Stare",
+            type: "select",
+            value: m.active ? "1" : "0",
+            options: [
+              { v: "1", l: "Activ" },
+              { v: "0", l: "Inactiv" },
+            ],
+          },
+        ] as FormField[])
+      : []),
   ];
 }
 
@@ -457,7 +462,7 @@ export function newMember() {
         role: d.role,
         dept: depts[0] || "",
         depts,
-        active: d.active === "1",
+        active: true, // persoană nouă = activă (câmpul „Stare" apare doar la editare)
         email,
         platformRole: (d.platformRole || "") as "" | "manager",
       });
