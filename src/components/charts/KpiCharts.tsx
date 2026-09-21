@@ -58,6 +58,7 @@ export function DeptBars({ data }: { data: DeptDatum[] }) {
           cursor={{ fill: "rgba(255,255,255,.04)" }}
           contentStyle={tooltipStyle}
           labelStyle={{ color: MUTED, fontWeight: 700 }}
+          itemStyle={{ color: "#fff" }}
           formatter={(v) => [v + "%", "realizare"]}
           labelFormatter={(_, payload) => payload?.[0]?.payload?.full || ""}
         />
@@ -107,6 +108,7 @@ export function TrendLine({ data }: { data: TrendDatum[] }) {
         <Tooltip
           contentStyle={tooltipStyle}
           labelStyle={{ color: MUTED, fontWeight: 700 }}
+          itemStyle={{ color: "#fff" }}
           formatter={(v) => [v + "%", "realizare medie"]}
         />
         <Area
