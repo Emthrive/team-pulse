@@ -166,7 +166,7 @@ export function Kpi() {
         )}
       </div>
 
-      <div className="row" style={{ justifyContent: "space-between" }}>
+      <div className="row" style={{ justifyContent: "space-between", marginTop: 20 }}>
         <div className="row" style={{ flex: 1 }}>
           <MonthRangePicker start={kstart} end={kend} onChange={setKRange} />
         </div>

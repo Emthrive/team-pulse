@@ -22,7 +22,8 @@ const MUTED = "#8a94c4";
 const GRID = "rgba(255,255,255,.06)";
 const TURQ = "#19c8db";
 
-const statusColor = (p: number) => (p >= 80 ? "#3fd9a0" : p >= 50 ? TURQ : "#ff5c7a");
+// Realizare KPI: verde plăcut peste 80%, turcoaz în rest (fără roşu — nu semnalăm „rău").
+const statusColor = (p: number) => (p >= 80 ? "#3fd9a0" : TURQ);
 
 const tooltipStyle = {
   background: "#0a1245",
