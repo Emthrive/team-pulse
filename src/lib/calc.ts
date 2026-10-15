@@ -1,7 +1,6 @@
 // ============================================================
 //  HELPERI DE CALCUL — scoruri, progres, KPI (portați din original)
 // ============================================================
-import { CRIT } from "./constants";
 import type { CrmState, Kpi, Member, MemberStats, Task } from "./types";
 import { monthISO, todayISO } from "./utils";
 
@@ -256,13 +255,6 @@ export function memberStats(
     ? Math.round(ks.reduce((a, k) => a + kpiScoreRange(S, k, months), 0) / ks.length)
     : null;
 
-  const ev = S.evals.find((e) => e.member === id && e.month === emonth);
-  const evs = ev
-    ? Math.round(
-        (CRIT.reduce((a, c) => a + (Number(ev.scores[c.id]) || 0), 0) / CRIT.length / 5) * 100,
-      )
-    : null;
-
   const W = S.weights || { exec: 40, kpi: 30, eval: 30 };
   let num = 0;
   let den = 0;
@@ -274,10 +266,6 @@ export function memberStats(
     num += kp * W.kpi;
     den += W.kpi;
   }
-  if (evs !== null) {
-    num += evs * W.eval;
-    den += W.eval;
-  }
   const total = den ? Math.round(num / den) : null;
 
   return {
@@ -288,7 +276,6 @@ export function memberStats(
     late: late.length,
     exec,
     kpi: kp,
-    eval: evs,
     total,
   };
 }

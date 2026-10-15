@@ -145,7 +145,6 @@ export interface MemberStats {
   late: number;
   exec: number | null;
   kpi: number | null;
-  eval: number | null;
   total: number | null;
 }
 

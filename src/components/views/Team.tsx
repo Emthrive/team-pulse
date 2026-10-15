@@ -4,7 +4,7 @@
 // ============================================================
 import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, memberDepts, memberStats, monthsInRange } from "@/lib/calc";
-import { editMember, evalMember, newMember } from "@/lib/forms";
+import { editMember, newMember } from "@/lib/forms";
 import { inviteUser } from "@/lib/invite";
 import { useStore } from "@/lib/store";
 
@@ -12,7 +12,7 @@ async function sendLink(email: string) {
   const r = await inviteUser(email);
   alert(r.ok ? "Link de acces trimis către " + email + "." : "Nu s-a putut trimite: " + r.error);
 }
-import { Avatar, Bar } from "../ui/primitives";
+import { Avatar } from "../ui/primitives";
 
 export function Team() {
   const S = useStore((s) => s.S)!;
@@ -23,7 +23,7 @@ export function Team() {
   const emonth = useStore((s) => s.emonth);
   const setFlt = useStore((s) => s.setFlt);
   const setTab = useStore((s) => s.setTab);
-  const { admin, elevated } = useRole();
+  const { admin } = useRole();
 
   const myId = currentMemberId(S, me, authEmail);
 
@@ -44,7 +44,6 @@ export function Team() {
 
       <div className="grid g4" style={{ marginTop: 14 }}>
         {list.map(({ m, s }) => {
-          const ev = S.evals.find((e) => e.member === m.id && e.month === emonth);
           return (
             <div className="card" key={m.id}>
               <div className="row" style={{ alignItems: "flex-start", gap: 11 }}>
@@ -82,27 +81,12 @@ export function Team() {
                   <div style={{ fontWeight: 800, fontSize: 20 }}>{s.done}</div>
                 </div>
               </div>
-              <div style={{ marginTop: 10 }}>
-                <div className="lbl">Evaluare calitativă</div>
-                <div style={{ fontWeight: 800 }}>{s.eval === null ? "neevaluat" : s.eval + "%"}</div>
-                <Bar pct={s.eval || 0} />
-              </div>
               <div className="row" style={{ marginTop: 11 }}>
                 <span className="chip">{s.active} active</span>
                 <span className="chip green">{s.done} finalizate</span>
                 {s.late ? <span className="chip red">{s.late} întârziate</span> : null}
               </div>
-              {ev && ev.notes && (
-                <p className="mini" style={{ marginTop: 10, lineHeight: 1.5 }}>
-                  „{ev.notes}”
-                </p>
-              )}
               <div className="row" style={{ marginTop: 12 }}>
-                {elevated && (
-                  <button className="btn sm" onClick={() => evalMember(m.id)}>
-                    {ev ? "Editează evaluarea" : "Evaluează"}
-                  </button>
-                )}
                 <button
                   className="btn ghost sm"
                   onClick={() => {

@@ -6,7 +6,7 @@
 // ============================================================
 import { isAdminEmail, isElevated } from "./admin";
 import { currentMemberId, memberDepts, memName, myDeptIds } from "./calc";
-import { CRIT, PRIO, STATUS, prName, stName } from "./constants";
+import { PRIO, STATUS, prName, stName } from "./constants";
 import { logEvent } from "./history";
 import { inviteUser } from "./invite";
 import type { CrmState, KpiAuto, Member, Task } from "./types";
@@ -518,44 +518,6 @@ export function editMember(id: string) {
       });
       draft.evals = draft.evals.filter((e) => e.member !== id);
     },
-  });
-}
-
-export function evalMember(id: string) {
-  const { S, emonth, openForm } = st();
-  if (!S) return;
-  const ev = S.evals.find((e) => e.member === id && e.month === emonth);
-  const sc = ev ? ev.scores : {};
-  const name = S.members.find((m) => m.id === id)?.n || "nealocat";
-  const fields: FormField[] = CRIT.map((c) => ({
-    key: c.id,
-    label: c.n,
-    type: "range",
-    min: 1,
-    max: 5,
-    value: sc[c.id] || 3,
-  }));
-  fields.push({ key: "notes", label: "Observaţii şi plan de dezvoltare", type: "textarea", value: ev ? ev.notes : "" });
-  openForm({
-    title: "Evaluare · " + name,
-    note: "Notează de la 1 la 5 pentru luna selectată.",
-    fields,
-    onSubmit: (d, draft) => {
-      const scores: Record<string, number> = {};
-      CRIT.forEach((c) => (scores[c.id] = Number(d[c.id]) || 3));
-      const cur = draft.evals.find((e) => e.member === id && e.month === emonth);
-      if (cur) {
-        cur.scores = scores;
-        cur.notes = d.notes;
-      } else {
-        draft.evals.push({ id: uid(), member: id, month: emonth, scores, notes: d.notes });
-      }
-    },
-    onDelete: ev
-      ? (draft) => {
-          draft.evals = draft.evals.filter((e) => e.id !== ev.id);
-        }
-      : null,
   });
 }
 
