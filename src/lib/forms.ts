@@ -564,29 +564,3 @@ export function editDept(id: string) {
       : null,
   });
 }
-
-export function editWeights() {
-  const { S, openForm } = st();
-  if (!S) return;
-  const W = S.weights;
-  openForm({
-    title: "Ponderi scor final",
-    note: "Se normalizează automat la 100%.",
-    fields: [
-      { key: "exec", label: "Execuţie taskuri", type: "range", min: 0, max: 100, step: 5, value: W.exec },
-      { key: "kpi", label: "Realizare KPI", type: "range", min: 0, max: 100, step: 5, value: W.kpi },
-      { key: "eval", label: "Evaluare calitativă", type: "range", min: 0, max: 100, step: 5, value: W.eval },
-    ],
-    onSubmit: (d, draft) => {
-      const e = Number(d.exec);
-      const k = Number(d.kpi);
-      const v = Number(d.eval);
-      const s = e + k + v || 1;
-      draft.weights = {
-        exec: Math.round((e / s) * 100),
-        kpi: Math.round((k / s) * 100),
-        eval: Math.round((v / s) * 100),
-      };
-    },
-  });
-}

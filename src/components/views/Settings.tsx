@@ -5,13 +5,12 @@
 import { exportCsv, exportJson, importJson, resetAll } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import { memName } from "@/lib/calc";
-import { editDept, editWeights, newDept } from "@/lib/forms";
+import { editDept, newDept } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 
 export function Settings() {
   const S = useStore((s) => s.S)!;
   const { admin } = useRole();
-  const W = S.weights;
 
   return (
     <>
@@ -40,18 +39,6 @@ export function Settings() {
         ))}
       </div>
 
-      <div className="sec">
-        <h2>Ponderi în scorul final</h2>
-        <span className="rule" />
-      </div>
-      <div className="card">
-        <div className="mini" style={{ marginBottom: 10 }}>
-          Execuţie {W.exec}% · KPI {W.kpi}% · Evaluare {W.eval}%
-        </div>
-        <button className="btn ghost sm" onClick={() => editWeights()}>
-          Modifică ponderile
-        </button>
-      </div>
 
       {/* Zona de date (export/import/reset) — doar pentru admin. */}
       {admin && (
