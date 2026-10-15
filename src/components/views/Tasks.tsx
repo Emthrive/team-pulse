@@ -4,7 +4,7 @@
 //  carduri compacte, click = modal cu detalii, drag & drop
 //  (userul doar taskurile lui, adminul şi managerul pe toate).
 // ============================================================
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { moveTask } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, isLate, mem, memName } from "@/lib/calc";
@@ -42,14 +42,16 @@ export function Tasks() {
     return () => mq.removeEventListener("change", upd);
   }, []);
 
-  // La deschidere, filtrul de membru vine preselectat cu userul curent —
-  // mai puţin pentru admin şi manager, care văd toată echipa.
+  // La deschidere, filtrul de membru vine preselectat cu userul curent — mai puţin
+  // pentru admin şi manager, care văd toată echipa. Aşteptăm auth-ul (ca rolul să fie
+  // corect la refresh) şi aplicăm o singură dată, fără să suprascriem o alegere manuală.
   const myId = currentMemberId(S, me, authEmail);
+  const presetRef = useRef(false);
   useEffect(() => {
+    if (presetRef.current || !authEmail) return;
+    presetRef.current = true;
     if (!elevated && myId && !flt.member) setFlt({ member: myId });
-    // rulează doar la montarea paginii
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authEmail, elevated, myId, flt.member, setFlt]);
 
   let ts = S.tasks.slice();
   if (flt.dept) ts = ts.filter((t) => t.dept === flt.dept);
