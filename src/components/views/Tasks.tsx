@@ -24,7 +24,6 @@ export function Tasks() {
   const authEmail = useStore((s) => s.authEmail);
   const flt = useStore((s) => s.flt);
   const setFlt = useStore((s) => s.setFlt);
-  const resetFlt = useStore((s) => s.resetFlt);
   const { elevated } = useRole();
 
   const [detail, setDetail] = useState<string | null>(null);
@@ -125,19 +124,6 @@ export function Tasks() {
               </option>
             ))}
         </select>
-        <button
-          className="btn ghost sm"
-          onClick={() => {
-            resetFlt();
-            try {
-              localStorage.removeItem(MEMBER_FILTER_KEY);
-            } catch {
-              /* ignore */
-            }
-          }}
-        >
-          Resetează
-        </button>
       </div>
 
       <div className="kanban">
