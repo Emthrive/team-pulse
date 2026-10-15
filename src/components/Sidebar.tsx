@@ -2,6 +2,7 @@
 // ============================================================
 //  SIDEBAR STÂNGA — navigație colapsabilă + branding TeamPulse
 // ============================================================
+import { useState } from "react";
 import { signOut } from "firebase/auth";
 import {
   Bell,
@@ -35,6 +36,7 @@ export function Sidebar() {
   const me = useStore((s) => s.me);
   const authEmail = useStore((s) => s.authEmail);
   const tab = useStore((s) => s.tab);
+  const [confirmOut, setConfirmOut] = useState(false);
   const setTab = useStore((s) => s.setTab);
   const collapsed = useStore((s) => s.collapsed);
   const toggleCollapsed = useStore((s) => s.toggleCollapsed);
@@ -114,7 +116,7 @@ export function Sidebar() {
         {firebaseReady && (
           <button
             className="foot-out"
-            onClick={() => signOut(getAuthClient())}
+            onClick={() => setConfirmOut(true)}
             title="Ieşi din cont"
             aria-label="Ieşi din cont"
           >
@@ -123,6 +125,38 @@ export function Sidebar() {
           </button>
         )}
       </div>
+      {confirmOut && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            display: "grid",
+            placeItems: "center",
+            background: "rgba(0,0,0,0.55)",
+          }}
+          onClick={() => setConfirmOut(false)}
+        >
+          <div
+            className="card"
+            style={{ width: "min(360px, 90vw)", padding: 20, textAlign: "center" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: 8 }}>Ieşi din cont?</h3>
+            <p className="mini" style={{ marginBottom: 16 }}>
+              Va trebui să te reconectezi cu link-ul de acces.
+            </p>
+            <div className="row" style={{ justifyContent: "center", gap: 10 }}>
+              <button className="btn ghost sm" onClick={() => setConfirmOut(false)}>
+                Renunţ
+              </button>
+              <button className="btn sm" onClick={() => signOut(getAuthClient())}>
+                Ieşi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
