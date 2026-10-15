@@ -207,7 +207,7 @@ export function Kpi() {
               <h2>{d.n}</h2>
               <span className="rule" />
               <span
-                className={`chip ${(dk || 0) >= 80 ? "green" : (dk || 0) >= 50 ? "turq" : "red"}`}
+                className={`chip ${(dk || 0) >= 80 ? "green" : (dk || 0) > 0 ? "turq" : "red"}`}
               >
                 {dk === null ? "—" : dk + "%"}
               </span>
