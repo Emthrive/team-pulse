@@ -58,7 +58,8 @@ export function Sidebar() {
 
 
   return (
-    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+    <>
+      <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="side-top">
         {collapsed ? (
           <LogoMark size={34} />
@@ -125,12 +126,13 @@ export function Sidebar() {
           </button>
         )}
       </div>
+      </aside>
       {confirmOut && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 200,
+            zIndex: 1000,
             display: "grid",
             placeItems: "center",
             background: "rgba(0,0,0,0.55)",
@@ -157,6 +159,6 @@ export function Sidebar() {
           </div>
         </div>
       )}
-    </aside>
+    </>
   );
 }
