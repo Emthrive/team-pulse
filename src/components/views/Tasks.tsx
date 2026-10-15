@@ -42,16 +42,36 @@ export function Tasks() {
     return () => mq.removeEventListener("change", upd);
   }, []);
 
-  // La deschidere, filtrul de membru vine preselectat cu userul curent — mai puţin
-  // pentru admin şi manager, care văd toată echipa. Aşteptăm auth-ul (ca rolul să fie
-  // corect la refresh) şi aplicăm o singură dată, fără să suprascriem o alegere manuală.
+  // Filtrul de membru: reîncărcăm preferinţa salvată local; dacă membrul salvat nu mai
+  // există → „Toată echipa". Fără preferinţă: userul normal e pe el, admin/manager pe tot.
+  const MEMBER_FILTER_KEY = "emthrive_task_member";
   const myId = currentMemberId(S, me, authEmail);
   const presetRef = useRef(false);
   useEffect(() => {
-    if (presetRef.current || !authEmail) return;
+    if (presetRef.current || !authEmail || flt.member) return;
     presetRef.current = true;
-    if (!elevated && myId && !flt.member) setFlt({ member: myId });
-  }, [authEmail, elevated, myId, flt.member, setFlt]);
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem(MEMBER_FILTER_KEY);
+    } catch {
+      /* fără localStorage */
+    }
+    if (saved !== null) {
+      const exists = saved === "" || S.members.some((m) => m.id === saved);
+      setFlt({ member: exists ? saved : "" });
+    } else if (!elevated && myId) {
+      setFlt({ member: myId });
+    }
+  }, [authEmail, elevated, myId, flt.member, setFlt, S.members]);
+  // Salvează local ce filtru preferă userul.
+  const setMemberFilter = (v: string) => {
+    setFlt({ member: v });
+    try {
+      localStorage.setItem(MEMBER_FILTER_KEY, v);
+    } catch {
+      /* ignore */
+    }
+  };
 
   let ts = S.tasks.slice();
   if (flt.dept) ts = ts.filter((t) => t.dept === flt.dept);
@@ -95,7 +115,7 @@ export function Tasks() {
       </div>
 
       <div className="filters">
-        <select value={flt.member} onChange={(e) => setFlt({ member: e.target.value })}>
+        <select value={flt.member} onChange={(e) => setMemberFilter(e.target.value)}>
           <option value="">Toată echipa</option>
           {S.members
             .filter((m) => m.active)
@@ -105,7 +125,17 @@ export function Tasks() {
               </option>
             ))}
         </select>
-        <button className="btn ghost sm" onClick={() => resetFlt()}>
+        <button
+          className="btn ghost sm"
+          onClick={() => {
+            resetFlt();
+            try {
+              localStorage.removeItem(MEMBER_FILTER_KEY);
+            } catch {
+              /* ignore */
+            }
+          }}
+        >
           Resetează
         </button>
       </div>
