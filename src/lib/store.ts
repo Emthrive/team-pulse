@@ -30,6 +30,8 @@ export interface FormField {
   step?: number | string;
   /** Câmpul apare doar când condiţia pe valorile curente ale formularului e adevărată. */
   showIf?: (d: Record<string, string>) => boolean;
+  /** La schimbarea valorii, returnează câmpuri derivate de precompletat (ex: dept din responsabil). */
+  onChange?: (value: string, d: Record<string, string>) => Record<string, string> | void;
 }
 
 export interface FormConfig {

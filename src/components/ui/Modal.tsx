@@ -3,7 +3,7 @@
 //  MODAL / FORMULAR GENERIC (portat din openForm)
 // ============================================================
 import { useEffect, useState } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, type FormField } from "@/lib/store";
 
 export function Modal() {
   const form = useStore((s) => s.form);
@@ -26,6 +26,13 @@ export function Modal() {
   if (!form) return null;
 
   const setField = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+  // Aplică schimbarea + câmpurile derivate (ex: departament precompletat din responsabil).
+  const change = (fl: FormField, v: string) =>
+    setData((d) => {
+      const next = { ...d, [fl.key]: v };
+      const derived = fl.onChange?.(v, next);
+      return derived ? { ...next, ...derived } : next;
+    });
 
   const onDelete = () => {
     if (!confirm("Sigur ştergi? Acţiunea nu poate fi anulată.")) return;
@@ -80,7 +87,7 @@ export function Modal() {
               );
             }
             ctl = (
-              <select value={v} onChange={(e) => setField(fl.key, e.target.value)}>
+              <select value={v} onChange={(e) => change(fl, e.target.value)}>
                 {rendered}
               </select>
             );

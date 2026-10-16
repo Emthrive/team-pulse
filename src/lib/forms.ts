@@ -6,7 +6,7 @@
 // ============================================================
 import { isAdminEmail, isElevated } from "./admin";
 import { currentMemberId, memberDepts, memName, myDeptIds } from "./calc";
-import { PRIO, STATUS, prName, stName } from "./constants";
+import { PRIO, PROJECTS, STATUS, prName, stName } from "./constants";
 import { logEvent } from "./history";
 import { inviteUser } from "./invite";
 import type { CrmState, KpiAuto, Member, Task } from "./types";
@@ -49,40 +49,14 @@ function taskTypeOptions(S: CrmState, allowed: string[] | null, current = ""): {
 }
 const isType = (g: string) => TASK_TYPES.some((t) => t.toLowerCase() === g.trim().toLowerCase());
 const findType = (tags: string[]) => tags.find((g) => isType(g)) || "";
-/** Combină tipul ales + etichetele existente bifate + cele noi; dedup case-insensitive. */
-function mergeTags(raw: string, ttype: string, extags = ""): string[] {
-  const seen = new Set<string>();
+const isProject = (g: string) => PROJECTS.some((p) => p.toLowerCase() === g.trim().toLowerCase());
+const findProject = (tags: string[]) => tags.find((g) => isProject(g)) || "";
+/** Etichetele unui task = tipul de livrabil (leagă de KPI) + proiectul ales; ambele opționale. */
+function mergeTags(ttype: string, project: string): string[] {
   const out: string[] = [];
-  const push = (g: string) => {
-    const v = g.trim();
-    if (!v) return;
-    const key = v.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push(v);
-  };
-  if (ttype) push(ttype);
-  extags.split(",").forEach((g) => {
-    if (!isType(g)) push(g);
-  });
-  raw.split(",").forEach((g) => {
-    if (!isType(g)) push(g);
-  });
+  if (ttype.trim()) out.push(ttype.trim());
+  if (project.trim()) out.push(project.trim());
   return out;
-}
-
-/** Etichetele deja folosite în taskuri (fără tipurile de livrabil), unice case-insensitive. */
-function existingTags(S: CrmState): string[] {
-  const map = new Map<string, string>();
-  S.tasks.forEach((t) =>
-    (t.tags || []).forEach((g) => {
-      const v = g.trim();
-      if (!v || isType(v)) return;
-      const key = v.toLowerCase();
-      if (!map.has(key)) map.set(key, v);
-    }),
-  );
-  return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
 }
 
 interface TaskFieldOpts {
@@ -109,18 +83,24 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
   const fields: FormField[] = [
     { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
     {
-      key: "dept",
-      label: restricted ? "Departament (ale tale)" : "Departament",
-      type: "select",
-      value: t ? t.dept : fallbackDept,
-      options: deptOptions,
-    },
-    {
       key: "assignee",
       label: lockAssignee ? "Responsabil (tu)" : "Responsabil",
       type: "select",
       value: lockAssignee || (t ? t.assignee : self?.id || ""),
       options: assigneeOptions,
+      // La alegerea responsabilului, precompletăm departamentul cu al lui (rămâne editabil).
+      onChange: (v) => {
+        if (!v) return;
+        const m = S.members.find((x) => x.id === v);
+        return m ? { dept: memberDepts(m)[0] || m.dept } : undefined;
+      },
+    },
+    {
+      key: "dept",
+      label: restricted ? "Departament (ale tale)" : "Departament",
+      type: "select",
+      value: t ? t.dept : fallbackDept,
+      options: deptOptions,
     },
     { key: "deadline", label: "Termen limită", type: "date", value: t ? t.deadline : "" },
     { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "medie", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
@@ -140,23 +120,13 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     value: curType,
     options: taskTypeOptions(S, restricted ? deptChoices! : null, curType),
   });
-  // Refolosirea etichetelor existente (evită dubluri gen „Emthrive” / „Emthrive.com”):
-  // bifezi din listă; câmpul text e doar pentru etichete complet noi.
-  const known = existingTags(S);
-  if (known.length) {
-    fields.push({
-      key: "extags",
-      label: "Etichete existente (bifează pentru a refolosi)",
-      type: "checks",
-      value: t ? (t.tags || []).filter((g) => !isType(g)).join(",") : "",
-      options: known.map((g) => ({ v: g, l: "#" + g })),
-    });
-  }
+  // Proiectul taskului — listă fixă (înlocuiește etichetele libere de dinainte).
   fields.push({
-    key: "tags",
-    label: "Etichete noi (doar dacă nu există în listă)",
-    value: "",
-    ph: "ex: CampanieBTS",
+    key: "project",
+    label: "Proiect",
+    type: "select",
+    value: t ? findProject(t.tags || []) : "",
+    options: [{ v: "", l: "fără" }, ...PROJECTS.map((p) => ({ v: p, l: p }))],
   });
   fields.push({
     key: "recurring",
@@ -219,7 +189,7 @@ export function newTask() {
         priority: d.priority as Task["priority"],
         status: "todo", // mereu „De făcut" la creare
         progress: 0,
-        tags: mergeTags(d.tags, d.ttype || "", d.extags || ""),
+        tags: mergeTags(d.ttype || "", d.project || ""),
         notes: d.notes,
         subtasks: [],
         recurring: (d.recurring || "") as Task["recurring"],
@@ -252,7 +222,7 @@ export function editTask(id: string) {
       if (!tk) return;
       // Ce s-a schimbat — pentru jurnalul de activitate (un singur eveniment pe salvare).
       const newTitle = d.title.trim();
-      const newTags = mergeTags(d.tags, d.ttype || "", d.extags || "");
+      const newTags = mergeTags(d.ttype || "", d.project || "");
       const changes: string[] = [];
       if (newTitle && newTitle !== tk.title) changes.push("titlu");
       if (d.dept !== tk.dept)
@@ -260,7 +230,7 @@ export function editTask(id: string) {
       if (d.deadline !== tk.deadline) changes.push("termen → " + (d.deadline ? fmtDate(d.deadline) : "fără"));
       if (d.priority !== tk.priority) changes.push("prioritate → " + prName(d.priority));
       if (d.status !== tk.status) changes.push("status → " + stName(d.status));
-      if (newTags.join("|") !== (tk.tags || []).join("|")) changes.push("etichete");
+      if (newTags.join("|") !== (tk.tags || []).join("|")) changes.push("tip/proiect");
       if ((d.notes || "") !== (tk.notes || "")) changes.push("note");
       if ((d.recurring || "") !== (tk.recurring || "")) changes.push("recurență");
       tk.title = newTitle || tk.title;
