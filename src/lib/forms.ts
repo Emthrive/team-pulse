@@ -70,7 +70,7 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     : self?.dept || fltDept || S.departments[0].id;
   const assigneeOptions = lockAssignee
     ? S.members.filter((m) => m.id === lockAssignee).map((m) => ({ v: m.id, l: m.n }))
-    : memberOpts(S, [{ v: "", l: "nealocat" }]);
+    : memberOpts(S);
 
   const fields: FormField[] = [
     { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
@@ -162,6 +162,20 @@ function applyAssignment(tk: Task, chosen: string, selfId: string) {
   }
 }
 
+/** Validarea formularului de task: titlu (≥3 după tăierea spaţiilor), responsabil, departament,
+ *  tip livrabil şi proiect sunt obligatorii. Termenul, recurenţa şi notele rămân opţionale. */
+function validateTask(d: Record<string, string>): Record<string, string> | null {
+  const e: Record<string, string> = {};
+  const title = (d.title || "").trim();
+  if (!title) e.title = "Titlul e obligatoriu.";
+  else if (title.length < 3) e.title = "Minim 3 caractere.";
+  if (!d.assignee) e.assignee = "Alege un responsabil.";
+  if (!d.dept) e.dept = "Alege un departament.";
+  if (!d.ttype) e.ttype = "Alege tipul livrabilului.";
+  if (!d.project) e.project = "Alege un proiect.";
+  return Object.keys(e).length ? e : null;
+}
+
 export function newTask() {
   const { S, me, authEmail, flt, openForm } = st();
   if (!S) return;
@@ -176,6 +190,7 @@ export function newTask() {
   openForm({
     title: "Task nou",
     fields: taskFields(S, null, flt.dept, { self, deptChoices, forNew: true }),
+    validate: validateTask,
     onSubmit: (d, draft) => {
       if (!d.title.trim()) return;
       const t: Task = {
@@ -195,6 +210,7 @@ export function newTask() {
         recurring: (d.recurring || "") as Task["recurring"],
         createdAt: todayISO(),
         completedAt: "",
+        version: 1, // creat sub regulile noi — se validează şi la editare
       };
       logEvent(t, selfId, "creat");
       // Dacă la creare (ca admin) alegi alt responsabil, devine propunere (pending).
@@ -217,6 +233,8 @@ export function editTask(id: string) {
   openForm({
     title: "Editează task",
     fields: taskFields(S, t, "", { deptChoices }),
+    // Validăm la editare doar taskurile create sub regulile noi (version 1); cele vechi rămân permisive.
+    validate: t.version === 1 ? validateTask : undefined,
     onSubmit: (d, draft) => {
       const tk = draft.tasks.find((x) => x.id === id);
       if (!tk) return;

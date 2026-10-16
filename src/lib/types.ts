@@ -90,6 +90,9 @@ export interface Task {
   history?: TaskEvent[];
   /** Arhivat automat: în Finalizat de peste 7 zile (de la ultima finalizare). */
   archived?: boolean;
+  /** Versiunea schemei taskului. v1 = creat cu câmpuri obligatorii (titlu/responsabil/dept/tip/proiect).
+   *  Doar taskurile cu version 1 sunt validate la editare; cele vechi (fără version) rămân permisive. */
+  version?: number;
 }
 
 /** Sursa unui KPI automat — metrică derivată din taskuri. Gol = manual. */

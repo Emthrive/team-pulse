@@ -12,6 +12,7 @@ export function Modal() {
   const deleteForm = useStore((s) => s.deleteForm);
 
   const [data, setData] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (form) {
@@ -20,19 +21,37 @@ export function Modal() {
         init[f.key] = f.value == null ? "" : String(f.value);
       });
       setData(init);
+      setErrors({});
     }
   }, [form]);
 
   if (!form) return null;
 
-  const setField = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+  // La editarea unui câmp ştergem eroarea lui (dispare pe măsură ce completezi).
+  const clearErr = (k: string) => setErrors((e) => (e[k] ? { ...e, [k]: "" } : e));
+  const setField = (k: string, v: string) => {
+    setData((d) => ({ ...d, [k]: v }));
+    clearErr(k);
+  };
   // Aplică schimbarea + câmpurile derivate (ex: departament precompletat din responsabil).
-  const change = (fl: FormField, v: string) =>
+  const change = (fl: FormField, v: string) => {
     setData((d) => {
       const next = { ...d, [fl.key]: v };
       const derived = fl.onChange?.(v, next);
       return derived ? { ...next, ...derived } : next;
     });
+    clearErr(fl.key);
+  };
+
+  // Validare înainte de salvare: dacă întoarce mesaje, le afişăm sub câmpuri şi nu salvăm.
+  const onSave = () => {
+    const errs = form.validate?.(data) || null;
+    if (errs && Object.values(errs).some(Boolean)) {
+      setErrors(errs);
+      return;
+    }
+    submitForm(data);
+  };
 
   const onDelete = () => {
     if (!confirm("Sigur ştergi? Acţiunea nu poate fi anulată.")) return;
@@ -149,6 +168,11 @@ export function Modal() {
                 {fl.type === "range" && <> · <span className="rv">{v}</span></>}
               </label>
               {ctl}
+              {errors[fl.key] && (
+                <div style={{ color: "var(--color-red)", fontSize: 11.5, marginTop: 5 }}>
+                  {errors[fl.key]}
+                </div>
+              )}
             </div>
           );
         })}
@@ -157,7 +181,7 @@ export function Modal() {
           <button className="btn ghost" onClick={closeForm}>
             Renunţ
           </button>
-          <button className="btn" onClick={() => submitForm(data)}>
+          <button className="btn" onClick={onSave}>
             {form.ok || "Salvează"}
           </button>
         </div>

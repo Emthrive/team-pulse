@@ -41,6 +41,8 @@ export interface FormConfig {
   note?: string;
   ok?: string;
   fields: FormField[];
+  /** Validare la salvare: întoarce { câmp: mesaj } pentru erori sau null dacă e totul ok. */
+  validate?: (data: Record<string, string>) => Record<string, string> | null;
   // Primesc draft-ul de stare (`S`) și re-găsesc entitățile după id în interior,
   // ca să nu depindem de referințe capturate la deschiderea formularului.
   onSubmit: (data: Record<string, string>, S: CrmState) => void;
