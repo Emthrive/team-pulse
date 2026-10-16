@@ -56,7 +56,7 @@ export function Modal() {
           const v = data[fl.key] ?? "";
           let ctl: React.ReactNode;
           if (fl.type === "select") {
-            const opts = fl.options || [];
+            const opts = fl.optionsFn ? fl.optionsFn(data) : fl.options || [];
             // Opțiunile consecutive cu același grup (g) apar sub un header <optgroup>.
             const rendered: React.ReactNode[] = [];
             let i = 0;

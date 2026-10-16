@@ -15,7 +15,7 @@ export function seed(): CrmState {
     { id: "part", n: "Parteneriate" },
     { id: "cons", n: "Consilieri" },
     { id: "adm", n: "Administrativ & Financiar" },
-  ].map((d) => ({ ...d, leadId: "" }));
+  ];
 
   // KPI de business, la nivel de departament (fără responsabil).
   const kpi = (n: string, dept: string, target: number, unit: string, dir?: KpiDir): Kpi => ({
@@ -195,6 +195,15 @@ export function migrate(S: CrmState): boolean {
       if (st === "blocat") t.status = "lucru";
     });
     S.version = 10;
+    changed = true;
+  }
+
+  // v11: prioritate simplificată la 2 trepte — orice nu e „critica" devine „normala".
+  if ((S.version || 2) < 11) {
+    S.tasks.forEach((t) => {
+      if ((t.priority as string) !== "critica") t.priority = "normala";
+    });
+    S.version = 11;
     changed = true;
   }
 

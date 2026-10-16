@@ -3,14 +3,13 @@
 // ============================================================
 
 export type StatusId = "backlog" | "todo" | "lucru" | "testing" | "gata";
-export type PriorityId = "critica" | "ridicata" | "medie" | "scazuta";
+export type PriorityId = "normala" | "critica";
 export type KpiDir = "up" | "down";
 export type Recurring = "" | "saptamanal" | "lunar";
 
 export interface Department {
   id: string;
   n: string;
-  leadId: string;
 }
 
 export interface Member {

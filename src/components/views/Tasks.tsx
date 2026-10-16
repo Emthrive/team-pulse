@@ -16,7 +16,7 @@ import { TaskDetailModal } from "../TaskDetailModal";
 import { Avatar } from "../ui/primitives";
 import { NoteBlock } from "../NoteBlock";
 
-const order: Record<PriorityId, number> = { critica: 0, ridicata: 1, medie: 2, scazuta: 3 };
+const order: Record<PriorityId, number> = { critica: 0, normala: 1 };
 
 export function Tasks() {
   const S = useStore((s) => s.S)!;

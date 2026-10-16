@@ -11,10 +11,8 @@ export const STATUS: { id: StatusId; n: string; c: string }[] = [
 ];
 
 export const PRIO: { id: PriorityId; n: string; c: string }[] = [
+  { id: "normala", n: "Normală", c: "" },
   { id: "critica", n: "Critică", c: "red" },
-  { id: "ridicata", n: "Ridicată", c: "gold" },
-  { id: "medie", n: "Medie", c: "" },
-  { id: "scazuta", n: "Scăzută", c: "" },
 ];
 
 export const CRIT: { id: string; n: string }[] = [
@@ -38,8 +36,8 @@ export const TABS: { id: TabId; n: string }[] = [
 
 export const stName = (id: string) => (STATUS.find((x) => x.id === id) || STATUS[0]).n;
 export const stCls = (id: string) => (STATUS.find((x) => x.id === id) || STATUS[0]).c;
-export const prName = (id: string) => (PRIO.find((x) => x.id === id) || PRIO[2]).n;
-export const prCls = (id: string) => (PRIO.find((x) => x.id === id) || PRIO[2]).c;
+export const prName = (id: string) => (PRIO.find((x) => x.id === id) || PRIO[0]).n;
+export const prCls = (id: string) => (PRIO.find((x) => x.id === id) || PRIO[0]).c;
 
 export const MONTH_NAMES = [
   "ian", "feb", "mar", "apr", "mai", "iun",

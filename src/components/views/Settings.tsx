@@ -4,7 +4,6 @@
 // ============================================================
 import { exportCsv, exportJson, importJson, resetAll } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
-import { memName } from "@/lib/calc";
 import { editDept, newDept } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 
@@ -28,8 +27,7 @@ export function Settings() {
               <div style={{ fontWeight: 700, fontSize: 13.5 }}>{d.n}</div>
               <div className="mini">
                 {S.tasks.filter((t) => t.dept === d.id).length} taskuri ·{" "}
-                {S.kpis.filter((k) => k.dept === d.id).length} KPI · coordonator:{" "}
-                {d.leadId ? memName(S, d.leadId) : "nesetat"}
+                {S.kpis.filter((k) => k.dept === d.id).length} KPI
               </div>
             </div>
             <button className="btn ghost sm" onClick={() => editDept(d.id)}>

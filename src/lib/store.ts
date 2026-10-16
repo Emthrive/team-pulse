@@ -25,6 +25,8 @@ export interface FormField {
   ph?: string;
   /** `g` = grup (optgroup) — opțiunile consecutive cu același g apar sub un header comun. */
   options?: { v: string; l: string; g?: string }[];
+  /** Opțiuni calculate din valorile curente (ex: „Tip livrabil” filtrat pe departamentul ales). */
+  optionsFn?: (d: Record<string, string>) => { v: string; l: string; g?: string }[];
   min?: number;
   max?: number;
   step?: number | string;

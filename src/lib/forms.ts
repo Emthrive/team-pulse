@@ -30,20 +30,12 @@ const TASK_TYPES_BY_DEPT: { dept: string; types: string[] }[] = [
   { dept: "part", types: ["Propunere", "Parteneriat semnat", "Sponsorizare"] },
 ];
 const TASK_TYPES = TASK_TYPES_BY_DEPT.flatMap((x) => x.types);
-/** Opțiunile dropdown-ului „Tip livrabil": grupate pe departamente, în ordinea
- *  și cu numele curente din platformă. `allowed` limitează grupurile la
- *  departamentele utilizatorului (null = toate — admin/manager). Tipul deja
- *  setat pe task (`current`) rămâne mereu selectabil, ca editarea să nu-l piardă. */
-function taskTypeOptions(S: CrmState, allowed: string[] | null, current = ""): { v: string; l: string; g?: string }[] {
-  const out: { v: string; l: string; g?: string }[] = [{ v: "", l: "fără" }];
-  S.departments.forEach((d) => {
-    const types = TASK_TYPES_BY_DEPT.find((x) => x.dept === d.id)?.types;
-    if (!types) return;
-    const keep = !allowed || allowed.includes(d.id);
-    types.forEach((t) => {
-      if (keep || t === current) out.push({ v: t, l: t, g: d.n });
-    });
-  });
+/** Opțiunile „Tip livrabil" pentru UN departament (cel ales în formular): „fără" + tipurile
+ *  acelui departament. Tipul deja setat pe task (`current`) rămâne selectabil chiar dacă
+ *  departamentul s-a schimbat între timp, ca editarea să nu-l piardă. */
+function taskTypeOptionsForDept(deptId: string, current = ""): { v: string; l: string }[] {
+  const out: { v: string; l: string }[] = [{ v: "", l: "fără" }];
+  (TASK_TYPES_BY_DEPT.find((x) => x.dept === deptId)?.types || []).forEach((t) => out.push({ v: t, l: t }));
   if (current && !out.some((o) => o.v === current)) out.push({ v: current, l: current });
   return out;
 }
@@ -89,10 +81,15 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
       value: lockAssignee || (t ? t.assignee : self?.id || ""),
       options: assigneeOptions,
       // La alegerea responsabilului, precompletăm departamentul cu al lui (rămâne editabil).
-      onChange: (v) => {
+      // Dacă departamentul se schimbă, resetăm și „Tip livrabil" (tipurile sunt per-departament).
+      onChange: (v, d) => {
         if (!v) return;
         const m = S.members.find((x) => x.id === v);
-        return m ? { dept: memberDepts(m)[0] || m.dept } : undefined;
+        if (!m) return;
+        const nd = memberDepts(m)[0] || m.dept;
+        const out: Record<string, string> = { dept: nd };
+        if (nd !== d.dept) out.ttype = ""; // departament schimbat → resetăm tipul de livrabil
+        return out;
       },
     },
     {
@@ -101,9 +98,11 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
       type: "select",
       value: t ? t.dept : fallbackDept,
       options: deptOptions,
+      // Schimbarea departamentului invalidează tipul de livrabil (e specific departamentului).
+      onChange: () => ({ ttype: "" }),
     },
     { key: "deadline", label: "Termen limită", type: "date", value: t ? t.deadline : "" },
-    { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "medie", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
+    { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "normala", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
   ];
 
   // Status doar la editare — la creare taskul e mereu „De făcut". Progresul se
@@ -118,7 +117,8 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     label: "Tip livrabil (se leagă automat de KPI)",
     type: "select",
     value: curType,
-    options: taskTypeOptions(S, restricted ? deptChoices! : null, curType),
+    // Opțiunile depind de departamentul ales — se re-filtrează când schimbi departamentul.
+    optionsFn: (d) => taskTypeOptionsForDept(d.dept, d.ttype),
   });
   // Proiectul taskului — listă fixă (înlocuiește etichetele libere de dinainte).
   fields.push({
@@ -497,12 +497,9 @@ export function newDept() {
   if (!S) return;
   openForm({
     title: "Departament nou",
-    fields: [
-      { key: "n", label: "Denumire", value: "" },
-      { key: "leadId", label: "Coordonator", type: "select", value: "", options: [{ v: "", l: "nesetat" }].concat(S.members.map((m) => ({ v: m.id, l: m.n }))) },
-    ],
+    fields: [{ key: "n", label: "Denumire", value: "" }],
     onSubmit: (d, draft) => {
-      if (d.n.trim()) draft.departments.push({ id: uid(), n: d.n.trim(), leadId: d.leadId });
+      if (d.n.trim()) draft.departments.push({ id: uid(), n: d.n.trim() });
     },
   });
 }
@@ -514,15 +511,11 @@ export function editDept(id: string) {
   if (!d) return;
   openForm({
     title: "Editează departamentul",
-    fields: [
-      { key: "n", label: "Denumire", value: d.n },
-      { key: "leadId", label: "Coordonator", type: "select", value: d.leadId || "", options: [{ v: "", l: "nesetat" }].concat(S.members.map((m) => ({ v: m.id, l: m.n }))) },
-    ],
+    fields: [{ key: "n", label: "Denumire", value: d.n }],
     onSubmit: (x, draft) => {
       const dd = draft.departments.find((z) => z.id === id);
       if (!dd) return;
       dd.n = x.n.trim() || dd.n;
-      dd.leadId = x.leadId;
     },
     // Ştergerea unui departament şterge şi taskurile/KPI-urile lui — doar adminul.
     onDelete: isAdminEmail(authEmail)
