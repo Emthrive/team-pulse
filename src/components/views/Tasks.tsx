@@ -76,7 +76,10 @@ export function Tasks() {
   if (flt.dept) ts = ts.filter((t) => t.dept === flt.dept);
   if (flt.member)
     ts = ts.filter(
-      (t) => t.assignee === flt.member || (t.subtasks || []).some((s) => s.assignee === flt.member),
+      (t) =>
+        !t.assignee || // nealocat = backlog-ul echipei, vizibil indiferent de filtrul pe membru
+        t.assignee === flt.member ||
+        (t.subtasks || []).some((s) => s.assignee === flt.member),
     );
 
   ts.sort(
@@ -129,13 +132,13 @@ export function Tasks() {
       <div className="kanban">
         {STATUS.map((st) => {
           // Finalizat: implicit doar cele recente; arhiva (7+ zile) e pe comutator.
-          const archivedCount =
-            st.id === "gata" ? ts.filter((t) => t.status === "gata" && t.archived).length : 0;
-          const items = ts.filter(
-            (t) =>
-              t.status === st.id &&
-              (st.id !== "gata" || (showArchived ? !!t.archived : !t.archived)),
-          );
+          // Arhiva (comutatorul de pe „Finalizat") adună TOATE taskurile arhivate, indiferent de status.
+          // Restul coloanelor arată doar taskurile nearhivate din statusul lor.
+          const archivedCount = st.id === "gata" ? ts.filter((t) => t.archived).length : 0;
+          const items =
+            st.id === "gata" && showArchived
+              ? ts.filter((t) => t.archived)
+              : ts.filter((t) => t.status === st.id && !t.archived);
           return (
             <div
               key={st.id}
@@ -155,7 +158,7 @@ export function Tasks() {
                   <button
                     className={`karh ${showArchived ? "on" : ""}`}
                     onClick={() => setShowArchived(!showArchived)}
-                    title={showArchived ? "Înapoi la cele recente" : "Vezi taskurile arhivate (7+ zile)"}
+                    title={showArchived ? "Înapoi la board" : "Vezi taskurile arhivate"}
                   >
                     {showArchived ? "recente" : `arhivă (${archivedCount})`}
                   </button>

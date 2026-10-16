@@ -52,7 +52,8 @@ export interface Completion {
 /** Tipurile de evenimente din jurnalul de activitate al unui task. */
 export type TaskEventKind =
   | "creat" | "asignat" | "propus" | "acceptat" | "refuzat"
-  | "status" | "finalizat" | "redeschis" | "reinnoit" | "editat" | "subtask";
+  | "status" | "finalizat" | "redeschis" | "reinnoit" | "editat" | "subtask"
+  | "arhivat" | "recuperat";
 
 /** Un eveniment din jurnalul taskului. */
 export interface TaskEvent {

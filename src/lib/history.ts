@@ -30,6 +30,8 @@ export function evText(e: TaskEvent): string {
     case "reinnoit": return "a reînnoit ciclul recurent";
     case "editat": return e.v ? "a editat: " + e.v : "a editat taskul";
     case "subtask": return "a adăugat în Epic: „" + (e.v || "") + "”";
+    case "arhivat": return "a arhivat taskul";
+    case "recuperat": return "a recuperat taskul din arhivă";
   }
 }
 

@@ -74,6 +74,26 @@ export function reopen(id: string) {
   });
 }
 
+/** Arhivare manuală (soft delete): taskul iese de pe board şi trece în arhivă — recuperabil. */
+export function archiveTask(id: string) {
+  st().mutate((S) => {
+    const t = S.tasks.find((x) => x.id === id);
+    if (!t || t.archived) return;
+    t.archived = true;
+    logEvent(t, actor(), "arhivat");
+  });
+}
+
+/** Recuperare din arhivă: taskul revine pe board cu statusul lui. */
+export function unarchiveTask(id: string) {
+  st().mutate((S) => {
+    const t = S.tasks.find((x) => x.id === id);
+    if (!t || !t.archived) return;
+    t.archived = false;
+    logEvent(t, actor(), "recuperat");
+  });
+}
+
 /** Mutare pe board (drag & drop): userul doar taskurile lui, adminul şi managerul pe toate. */
 export function moveTask(id: string, newStatus: import("./types").StatusId) {
   const { S, me, authEmail } = st();

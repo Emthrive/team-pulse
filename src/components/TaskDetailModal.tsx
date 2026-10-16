@@ -4,18 +4,19 @@
 //  toate informațiile + subtaskuri + acțiuni.
 // ============================================================
 import { useEffect, useState } from "react";
-import { addSub, finish, moveTask, reopen, toggleSub } from "@/lib/actions";
+import { addSub, archiveTask, finish, moveTask, reopen, toggleSub, unarchiveTask } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import { currentMemberId, depName, mem, memName } from "@/lib/calc";
 import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { evText, fmtEvDate } from "@/lib/history";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { StatusId, TaskEvent } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
 import { Avatar } from "./ui/primitives";
 import { NoteBlock } from "./NoteBlock";
+import { ConfirmModal } from "./ui/ConfirmModal";
 
 export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const S = useStore((s) => s.S)!;
@@ -24,6 +25,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   const { elevated } = useRole();
   const [subInput, setSubInput] = useState("");
   const [histOpen, setHistOpen] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
 
   const t = S.tasks.find((x) => x.id === taskId);
 
@@ -53,6 +55,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
     : "";
 
   return (
+    <>
     <div
       className="ovl"
       onClick={(e) => {
@@ -222,11 +225,40 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
               Editează
             </button>
           )}
+          {canEdit && t.archived && (
+            <button className="btn ghost sm" onClick={() => unarchiveTask(t.id)}>
+              Recuperează
+            </button>
+          )}
+          {canEdit && !t.archived && (
+            <button
+              className="btn ghost sm"
+              style={{ display: "inline-flex", alignItems: "center" }}
+              onClick={() => setConfirmArchive(true)}
+              title="Şterge (mută în arhivă)"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
           <button className="btn ghost sm" style={{ marginLeft: "auto" }} onClick={onClose}>
             Închide
           </button>
         </div>
       </div>
     </div>
+    {confirmArchive && (
+      <ConfirmModal
+        title="Arhivezi taskul?"
+        message="Taskul se mută în arhivă. Îl poţi recupera oricând de acolo."
+        confirmLabel="Arhivează"
+        onConfirm={() => {
+          archiveTask(t.id);
+          setConfirmArchive(false);
+          onClose();
+        }}
+        onCancel={() => setConfirmArchive(false)}
+      />
+    )}
+    </>
   );
 }

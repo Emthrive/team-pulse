@@ -70,7 +70,7 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     : self?.dept || fltDept || S.departments[0].id;
   const assigneeOptions = lockAssignee
     ? S.members.filter((m) => m.id === lockAssignee).map((m) => ({ v: m.id, l: m.n }))
-    : memberOpts(S);
+    : memberOpts(S, [{ v: "", l: "nealocat (backlog echipă)" }]);
 
   const fields: FormField[] = [
     { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
@@ -162,14 +162,14 @@ function applyAssignment(tk: Task, chosen: string, selfId: string) {
   }
 }
 
-/** Validarea formularului de task: titlu (≥3 după tăierea spaţiilor), responsabil, departament,
- *  tip livrabil şi proiect sunt obligatorii. Termenul, recurenţa şi notele rămân opţionale. */
+/** Validarea formularului de task: titlu (≥3 după tăierea spaţiilor), departament, tip livrabil şi
+ *  proiect sunt obligatorii. Responsabilul e opţional (gol = nealocat → backlog); la fel termen,
+ *  recurenţă şi note. */
 function validateTask(d: Record<string, string>): Record<string, string> | null {
   const e: Record<string, string> = {};
   const title = (d.title || "").trim();
   if (!title) e.title = "Titlul e obligatoriu.";
   else if (title.length < 3) e.title = "Minim 3 caractere.";
-  if (!d.assignee) e.assignee = "Alege un responsabil.";
   if (!d.dept) e.dept = "Alege un departament.";
   if (!d.ttype) e.ttype = "Alege tipul livrabilului.";
   if (!d.project) e.project = "Alege un proiect.";
@@ -202,7 +202,7 @@ export function newTask() {
         assignedBy: "",
         deadline: d.deadline,
         priority: d.priority as Task["priority"],
-        status: "todo", // mereu „De făcut" la creare
+        status: d.assignee ? "todo" : "backlog", // nealocat (fără responsabil) → Backlog (pool echipei)
         progress: 0,
         tags: mergeTags(d.ttype || "", d.project || ""),
         notes: d.notes,
