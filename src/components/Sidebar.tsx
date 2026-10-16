@@ -135,24 +135,26 @@ export function Sidebar() {
             zIndex: 1000,
             display: "grid",
             placeItems: "center",
-            background: "rgba(0,0,0,0.55)",
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
           }}
           onClick={() => setConfirmOut(false)}
         >
           <div
             className="card"
-            style={{ width: "min(360px, 90vw)", padding: 20, textAlign: "center" }}
+            style={{ width: "min(460px, 92vw)", padding: 32, textAlign: "center" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: 8 }}>Ieşi din cont?</h3>
-            <p className="mini" style={{ marginBottom: 16 }}>
+            <h3 style={{ marginBottom: 10, fontSize: 21 }}>Ieşi din cont?</h3>
+            <p className="mini" style={{ marginBottom: 24, fontSize: 13.5 }}>
               Va trebui să te reconectezi cu link-ul de acces.
             </p>
-            <div className="row" style={{ justifyContent: "center", gap: 10 }}>
-              <button className="btn ghost sm" onClick={() => setConfirmOut(false)}>
+            <div className="row" style={{ justifyContent: "center", gap: 12 }}>
+              <button className="btn ghost" onClick={() => setConfirmOut(false)}>
                 Renunţ
               </button>
-              <button className="btn sm" onClick={() => signOut(getAuthClient())}>
+              <button className="btn" onClick={() => signOut(getAuthClient())}>
                 Ieşi
               </button>
             </div>
