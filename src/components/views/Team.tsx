@@ -7,6 +7,7 @@ import { currentMemberId, depName, memberDepts, memberStats, monthsInRange } fro
 import { editMember, newMember } from "@/lib/forms";
 import { inviteUser } from "@/lib/invite";
 import { useStore } from "@/lib/store";
+import { Pencil } from "lucide-react";
 
 async function sendLink(email: string) {
   const r = await inviteUser(email);
@@ -102,8 +103,13 @@ export function Team() {
                   </button>
                 )}
                 {admin && (
-                  <button className="btn ghost sm" onClick={() => editMember(m.id)}>
-                    ⋯
+                  <button
+                    className="btn ghost sm"
+                    style={{ display: "inline-flex", alignItems: "center" }}
+                    onClick={() => editMember(m.id)}
+                    title="Editează"
+                  >
+                    <Pencil size={15} />
                   </button>
                 )}
               </div>
@@ -129,8 +135,13 @@ export function Team() {
                     <div className="mini">{m.role || ""}</div>
                   </div>
                   {admin && (
-                    <button className="btn ghost sm" onClick={() => editMember(m.id)}>
-                      ⋯
+                    <button
+                      className="btn ghost sm"
+                      style={{ display: "inline-flex", alignItems: "center" }}
+                      onClick={() => editMember(m.id)}
+                      title="Editează"
+                    >
+                      <Pencil size={15} />
                     </button>
                   )}
                 </div>

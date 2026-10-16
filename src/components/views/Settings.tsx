@@ -6,6 +6,7 @@ import { exportCsv, exportJson, importJson, resetAll } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import { editDept, newDept } from "@/lib/forms";
 import { useStore } from "@/lib/store";
+import { Pencil } from "lucide-react";
 
 export function Settings() {
   const S = useStore((s) => s.S)!;
@@ -30,8 +31,13 @@ export function Settings() {
                 {S.kpis.filter((k) => k.dept === d.id).length} KPI
               </div>
             </div>
-            <button className="btn ghost sm" onClick={() => editDept(d.id)}>
-              ⋯
+            <button
+              className="btn ghost sm"
+              style={{ display: "inline-flex", alignItems: "center" }}
+              onClick={() => editDept(d.id)}
+              title="Editează"
+            >
+              <Pencil size={15} />
             </button>
           </div>
         ))}

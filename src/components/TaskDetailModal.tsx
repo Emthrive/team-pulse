@@ -11,6 +11,7 @@ import { prCls, prName, stCls, stName, STATUS } from "@/lib/constants";
 import { editSub, editTask } from "@/lib/forms";
 import { useStore } from "@/lib/store";
 import { evText, fmtEvDate } from "@/lib/history";
+import { Pencil } from "lucide-react";
 import type { StatusId, TaskEvent } from "@/lib/types";
 import { daysLeft, fmtDate } from "@/lib/utils";
 import { Avatar } from "./ui/primitives";
@@ -129,8 +130,13 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
                   </div>
                 </div>
                 {canEdit && (
-                  <button className="btn ghost sm" onClick={() => editSub(t.id, s.id)}>
-                    ⋯
+                  <button
+                    className="btn ghost sm"
+                    style={{ display: "inline-flex", alignItems: "center" }}
+                    onClick={() => editSub(t.id, s.id)}
+                    title="Editează"
+                  >
+                    <Pencil size={15} />
                   </button>
                 )}
               </div>

@@ -26,14 +26,7 @@ import { daysLeft, fmtNum, lastMonths } from "@/lib/utils";
 import { DeptBars, Spark, TrendLine } from "../charts/KpiCharts";
 import { MonthRangePicker } from "../ui/MonthRangePicker";
 import { Avatar, Bar } from "../ui/primitives";
-
-const AUTO_LABEL: Record<string, string> = {
-  tasks_done: "taskuri finalizate",
-  epics_done: "Epice finalizate",
-  on_time_rate: "% la termen",
-  subtasks_done: "taskuri bifate în Epice",
-  tasks_created: "taskuri create",
-};
+import { Pencil } from "lucide-react";
 
 const monthLabel = (m: string) => MONTH_NAMES[+m.split("-")[1] - 1];
 
@@ -221,8 +214,13 @@ export function Kpi() {
                           </div>
                         </div>
                         {elevated && (
-                          <button className="btn ghost sm" onClick={() => editKpi(k.id)}>
-                            ⋯
+                          <button
+                            className="btn ghost sm"
+                            style={{ display: "inline-flex", alignItems: "center" }}
+                            onClick={() => editKpi(k.id)}
+                            title="Editează"
+                          >
+                            <Pencil size={15} />
                           </button>
                         )}
                       </div>
@@ -246,7 +244,6 @@ export function Kpi() {
                       <Bar pct={sc} cls="gold" />
                       <Spark data={spark} />
                       <div className="row" style={{ marginTop: 10 }}>
-                        <span className="chip turq">auto · {AUTO_LABEL[k.auto!] || "din taskuri"}</span>
                         <span className="mini" style={{ marginLeft: "auto" }}>
                           realizare {sc}%
                         </span>

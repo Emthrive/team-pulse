@@ -211,6 +211,14 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v13: „Epice finalizate" rămâne doar la IT & App — se scoate din restul departamentelor.
+  // (La nevoie se re-adaugă din formularul de KPI, sursa „Auto · Epice finalizate".)
+  if ((S.version || 2) < 13) {
+    S.kpis = S.kpis.filter((k) => !(k.auto === "epics_done" && k.dept !== "it"));
+    S.version = 13;
+    changed = true;
+  }
+
   // Arhivare automată (rulează mereu, idempotent): în Finalizat de peste 7 zile
   // de la ULTIMA finalizare (completedAt se resetează la reopen → cronometrul repornește).
   {
