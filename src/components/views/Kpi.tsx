@@ -1,10 +1,9 @@
 "use client";
 // ============================================================
-//  KPI — grafice + carduri; KPI-urile „auto” se calculează
-//  singure din taskuri (fără +/−), cele manuale rămân editabile.
+//  KPI — grafice + carduri; toate KPI-urile se calculează automat
+//  din taskuri (fără introducere manuală).
 //  Perioada e un interval de luni (implicit luna curentă).
 // ============================================================
-import { bump, setKpiVal } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
 import {
   depName,
@@ -19,7 +18,6 @@ import {
   memName,
   memberStats,
   monthsInRange,
-  myDeptIds,
 } from "@/lib/calc";
 import { MONTH_NAMES } from "@/lib/constants";
 import { editKpi, newKpi } from "@/lib/forms";
@@ -41,16 +39,12 @@ const monthLabel = (m: string) => MONTH_NAMES[+m.split("-")[1] - 1];
 
 export function Kpi() {
   const S = useStore((s) => s.S)!;
-  const me = useStore((s) => s.me);
-  const authEmail = useStore((s) => s.authEmail);
   const kstart = useStore((s) => s.kstart);
   const kend = useStore((s) => s.kend);
   const emonth = useStore((s) => s.emonth);
   const setKRange = useStore((s) => s.setKRange);
   const setTab = useStore((s) => s.setTab);
   const { elevated } = useRole();
-  // Valorile manuale pot fi modificate doar de membrii departamentului (adminul şi managerul peste tot).
-  const myDepts = myDeptIds(S, me, authEmail);
 
   const byDept = S.departments.map((d) => ({ d, ks: S.kpis.filter((k) => k.dept === d.id) }));
   const range = monthsInRange(kstart, kend);
@@ -177,11 +171,8 @@ export function Kpi() {
         )}
       </div>
       <p className="mini" style={{ margin: "10px 0 0" }}>
-        KPI-urile <b style={{ color: "var(--color-turq)" }}>auto</b> se calculează singure din
-        taskuri.{" "}
-        {singleMonth
-          ? "Cele manuale se completează pe luna selectată."
-          : "Pe o perioadă de mai multe luni valorile se însumează (ratele se ponderează); pentru editare alege o singură lună."}
+        Toate KPI-urile se calculează <b style={{ color: "var(--color-turq)" }}>automat</b> din
+        taskuri. Pe o perioadă de mai multe luni valorile se însumează (ratele se ponderează).
       </p>
 
       <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", marginTop: 14 }}>
@@ -218,8 +209,6 @@ export function Kpi() {
                   const v = kpiValRange(S, k, range);
                   const sc = kpiScoreRange(S, k, range);
                   const target = kpiTargetRange(k, range);
-                  const isAuto = !!k.auto;
-                  const canVals = elevated || myDepts.includes(k.dept);
                   const spark = sparkMonths.map((m) => ({ m: monthLabel(m), v: kpiVal(S, k, m) }));
                   return (
                     <div className="kpi" key={k.id}>
@@ -228,8 +217,7 @@ export function Kpi() {
                           <div style={{ fontWeight: 700, fontSize: 13.5 }}>{k.n}</div>
                           <div className="mini">
                             {k.assignee ? memName(S, k.assignee) : "la nivel de departament"}
-                            {k.dir === "down" ? " · ţintă maximă" : ""}
-                            {isAuto && k.tag ? " · #" + k.tag : ""}
+                            {k.tag ? " · #" + k.tag : ""}
                           </div>
                         </div>
                         {elevated && (
@@ -257,49 +245,12 @@ export function Kpi() {
                       </div>
                       <Bar pct={sc} cls="gold" />
                       <Spark data={spark} />
-                      {isAuto ? (
-                        <div className="row" style={{ marginTop: 10 }}>
-                          <span className="chip turq">auto · {AUTO_LABEL[k.auto!] || "din taskuri"}</span>
-                          <span className="mini" style={{ marginLeft: "auto" }}>
-                            realizare {sc}%
-                          </span>
-                        </div>
-                      ) : !canVals ? (
-                        <div className="row" style={{ marginTop: 10 }}>
-                          <span className="chip">doar {depName(S, k.dept)}</span>
-                          <span className="mini" style={{ marginLeft: "auto" }}>
-                            realizare {sc}%
-                          </span>
-                        </div>
-                      ) : !singleMonth ? (
-                        <div className="row" style={{ marginTop: 10 }}>
-                          <span className="chip gold">alege o singură lună pentru editare</span>
-                          <span className="mini" style={{ marginLeft: "auto" }}>
-                            realizare {sc}%
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="row" style={{ marginTop: 10 }}>
-                          <button className="step" onClick={() => bump(k.id, -1)}>
-                            −
-                          </button>
-                          <input
-                            className="kv"
-                            defaultValue={v}
-                            key={k.id + ":" + kend + ":" + v}
-                            onBlur={(e) => setKpiVal(k.id, e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                            }}
-                          />
-                          <button className="step" onClick={() => bump(k.id, 1)}>
-                            +
-                          </button>
-                          <span className="mini" style={{ marginLeft: "auto" }}>
-                            realizare {sc}%
-                          </span>
-                        </div>
-                      )}
+                      <div className="row" style={{ marginTop: 10 }}>
+                        <span className="chip turq">auto · {AUTO_LABEL[k.auto!] || "din taskuri"}</span>
+                        <span className="mini" style={{ marginLeft: "auto" }}>
+                          realizare {sc}%
+                        </span>
+                      </div>
                     </div>
                   );
                 })}

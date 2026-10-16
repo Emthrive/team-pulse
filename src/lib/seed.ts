@@ -4,7 +4,7 @@
 //  din platformă). Fără roster hardcodat.
 // ============================================================
 import { kpiAutoVal } from "./calc";
-import type { CrmState, Kpi, KpiDir } from "./types";
+import type { CrmState, Kpi } from "./types";
 import { monthISO, uid } from "./utils";
 
 export function seed(): CrmState {
@@ -18,14 +18,13 @@ export function seed(): CrmState {
   ];
 
   // KPI de business, la nivel de departament (fără responsabil).
-  const kpi = (n: string, dept: string, target: number, unit: string, dir?: KpiDir): Kpi => ({
+  const kpi = (n: string, dept: string, target: number, unit: string): Kpi => ({
     id: uid(),
     n,
     dept,
     assignee: "",
     target,
     unit,
-    dir: dir || "up",
     vals: {},
   });
 
@@ -44,7 +43,7 @@ export function seed(): CrmState {
     kpi("Sesiuni susţinute / consilier", "cons", 45, "sesiuni"),
     kpi("Rapoarte livrate în 48h", "cons", 95, "%"),
     kpi("Satisfacţie client", "cons", 9.5, "/10"),
-    kpi("Rată de no-show", "cons", 10, "%", "down"),
+    kpi("Rată de no-show", "cons", 10, "%"),
     kpi("Facturi emise la timp", "adm", 100, "%"),
     kpi("Raportare financiară trimisă până pe 5", "adm", 100, "%"),
   ];
@@ -90,7 +89,6 @@ export function migrate(S: CrmState): boolean {
           assignee: "",
           target: 10,
           unit: "buc",
-          dir: "up",
           vals: {},
           auto: "tasks_done",
           tag: "",
@@ -147,7 +145,6 @@ export function migrate(S: CrmState): boolean {
         assignee: "",
         target: 2,
         unit: "buc",
-        dir: "up",
         vals: {},
         auto: "tasks_done",
         tag: "Campanie",
@@ -177,7 +174,6 @@ export function migrate(S: CrmState): boolean {
           assignee: "",
           target: 2,
           unit: "buc",
-          dir: "up",
           vals: {},
           auto: "epics_done",
           tag: "",
@@ -204,6 +200,14 @@ export function migrate(S: CrmState): boolean {
       if ((t.priority as string) !== "critica") t.priority = "normala";
     });
     S.version = 11;
+    changed = true;
+  }
+
+  // v12: KPI doar automate — ştergem KPI-urile manuale (cele fără sursă auto, cu cifre din
+  // afara platformei: venit, satisfacţie, rate etc.). Rămân doar cele calculate din taskuri.
+  if ((S.version || 2) < 12) {
+    S.kpis = S.kpis.filter((k) => !!k.auto);
+    S.version = 12;
     changed = true;
   }
 

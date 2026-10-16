@@ -4,7 +4,6 @@
 
 export type StatusId = "backlog" | "todo" | "lucru" | "testing" | "gata";
 export type PriorityId = "normala" | "critica";
-export type KpiDir = "up" | "down";
 export type Recurring = "" | "saptamanal" | "lunar";
 
 export interface Department {
@@ -103,7 +102,6 @@ export interface Kpi {
   assignee: string;
   target: number;
   unit: string;
-  dir: KpiDir;
   vals: Record<string, number>;
   /** Setat → valoarea lunii se calculează automat din taskuri (fără +/−). */
   auto?: KpiAuto;

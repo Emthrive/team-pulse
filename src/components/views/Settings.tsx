@@ -80,10 +80,7 @@ export function Settings() {
           <b style={{ color: "var(--color-turq)" }}>Execuţie:</b> media dintre rata de finalizare la
           termen şi progresul mediu pe taskurile active, minus penalizare pentru întârzieri.
           <br />
-          <b style={{ color: "var(--color-turq)" }}>KPI:</b> realizat / ţintă pe luna selectată
-          (invers pentru indicatorii unde mai puţin e mai bine).
-          <br />
-          <b style={{ color: "var(--color-turq)" }}>Evaluare:</b> media celor 5 criterii, notate 1–5.
+          <b style={{ color: "var(--color-turq)" }}>KPI:</b> realizat / ţintă pe luna selectată.
         </p>
       </div>
     </>

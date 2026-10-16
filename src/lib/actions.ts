@@ -3,7 +3,7 @@
 //  ACȚIUNI DIRECTE (fără formular) — portate din original
 // ============================================================
 import { isElevated } from "./admin";
-import { currentMemberId, depName, memName, myDeptIds, taskProgress } from "./calc";
+import { currentMemberId, depName, memName, taskProgress } from "./calc";
 import { prName, stName } from "./constants";
 import { seed } from "./seed";
 import { logEvent } from "./history";
@@ -71,40 +71,6 @@ export function reopen(id: string) {
     // Redeschis → finalizarea nu mai e valabilă; scoatem ultima intrare din jurnal.
     if (t.completions && t.completions.length) t.completions.pop();
     logEvent(t, actor(), "redeschis");
-  });
-}
-
-/** Adminul/managerul peste tot; altfel doar membrii departamentului pot modifica un KPI manual. */
-function canEditKpiVals(S: import("./types").CrmState, deptId: string): boolean {
-  const { me, authEmail } = st();
-  return isElevated(S, me, authEmail) || myDeptIds(S, me, authEmail).includes(deptId);
-}
-
-export function bump(id: string, dir: number) {
-  const { kstart, kend } = st();
-  if (kstart !== kend) return; // editare doar pe o singură lună selectată
-  const kmonth = kstart;
-  st().mutate((S) => {
-    const k = S.kpis.find((x) => x.id === id);
-    if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
-    if (!canEditKpiVals(S, k.dept)) return; // doar departamentul lui
-    const step =
-      Number(k.target) >= 1000 ? Math.round(Number(k.target) / 100) : Number(k.target) >= 100 ? 5 : 1;
-    k.vals = k.vals || {};
-    k.vals[kmonth] = Math.max(0, (Number(k.vals[kmonth]) || 0) + dir * step);
-  });
-}
-
-export function setKpiVal(id: string, v: string) {
-  const { kstart, kend } = st();
-  if (kstart !== kend) return; // editare doar pe o singură lună selectată
-  const kmonth = kstart;
-  st().mutate((S) => {
-    const k = S.kpis.find((x) => x.id === id);
-    if (!k || k.auto) return; // KPI auto: valoarea vine din taskuri
-    if (!canEditKpiVals(S, k.dept)) return; // doar departamentul lui
-    k.vals = k.vals || {};
-    k.vals[kmonth] = Math.max(0, Number(String(v).replace(",", ".")) || 0);
   });
 }
 

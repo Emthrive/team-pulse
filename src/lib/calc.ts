@@ -120,7 +120,6 @@ export function kpiScore(S: CrmState, k: Kpi, mth: string): number {
   const v = kpiVal(S, k, mth);
   const t = Number(k.target) || 0;
   if (!t || !kpiHas(S, k, mth)) return 0;
-  if (k.dir === "down") return v <= 0 ? 100 : Math.max(0, Math.min(100, Math.round((t / v) * 100)));
   return Math.max(0, Math.min(100, Math.round((v / t) * 100)));
 }
 
@@ -188,7 +187,6 @@ export function kpiScoreRange(S: CrmState, k: Kpi, months: string[]): number {
   const v = kpiValRange(S, k, months);
   const t = kpiTargetRange(k, months);
   if (!t || !kpiHasRange(S, k, months)) return 0;
-  if (k.dir === "down") return v <= 0 ? 100 : Math.max(0, Math.min(100, Math.round((t / v) * 100)));
   return Math.max(0, Math.min(100, Math.round((v / t) * 100)));
 }
 

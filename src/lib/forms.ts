@@ -289,9 +289,8 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
       key: "auto",
       label: "Sursă valoare",
       type: "select",
-      value: k ? k.auto || "" : "",
+      value: k ? k.auto || "tasks_done" : "tasks_done",
       options: [
-        { v: "", l: "Manual (introduci valoarea lunar)" },
         { v: "tasks_done", l: "Auto · taskuri finalizate în lună" },
         { v: "epics_done", l: "Auto · Epice finalizate în lună" },
         { v: "on_time_rate", l: "Auto · % finalizate la termen" },
@@ -301,19 +300,8 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
     },
     { key: "tag", label: "Filtru etichetă (opţional, doar la auto)", value: k ? k.tag || "" : "", ph: "ex: Video" },
     { key: "dept", label: "Departament", type: "select", value: k ? k.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
-    { key: "assignee", label: "Responsabil", type: "select", value: k ? k.assignee : "", options: memberOpts(S, [{ v: "", l: "la nivel de departament" }]) },
     { key: "target", label: "Ţintă lunară", type: "number", value: k ? k.target : 0, step: "any" },
     { key: "unit", label: "Unitate", value: k ? k.unit : "", ph: "buc / RON / % / sesiuni" },
-    {
-      key: "dir",
-      label: "Direcţie",
-      type: "select",
-      value: k ? k.dir : "up",
-      options: [
-        { v: "up", l: "Mai mult = mai bine" },
-        { v: "down", l: "Mai puţin = mai bine" },
-      ],
-    },
   ];
 }
 
@@ -329,10 +317,9 @@ export function newKpi() {
         id: uid(),
         n: d.n.trim(),
         dept: d.dept,
-        assignee: d.assignee,
+        assignee: "",
         target: Number(d.target) || 0,
         unit: d.unit,
-        dir: d.dir as "up" | "down",
         vals: {},
         auto: (d.auto || "") as KpiAuto,
         tag: (d.tag || "").trim(),
@@ -354,10 +341,8 @@ export function editKpi(id: string) {
       if (!kk) return;
       kk.n = d.n.trim() || kk.n;
       kk.dept = d.dept;
-      kk.assignee = d.assignee;
       kk.target = Number(d.target) || 0;
       kk.unit = d.unit;
-      kk.dir = d.dir as "up" | "down";
       kk.auto = (d.auto || "") as KpiAuto;
       kk.tag = (d.tag || "").trim();
     },
