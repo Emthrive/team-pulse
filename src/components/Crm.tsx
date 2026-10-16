@@ -66,7 +66,7 @@ export function Crm() {
     <div className="shell">
       <Sidebar />
       <div className={`content ${collapsed ? "collapsed" : ""}`}>
-        <main className="app-main">
+        <main className={`app-main ${activeTab === "tasks" ? "board-view" : ""}`}>
           {!loaded || !S ? (
             <div className="empty">Se încarcă…</div>
           ) : activeTab === "tasks" ? (

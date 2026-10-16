@@ -1270,6 +1270,39 @@ textarea {
     color: var(--color-muted);
     font-weight: 600;
   }
+  /* Pagina „Taskuri" pe desktop: umple ecranul, fiecare coloană are scroll propriu (fără scroll pe
+     toată pagina). Pe mobil coloanele se stivuiesc şi pagina scrollează normal (regula nu se aplică). */
+  @media (min-width: 769px) {
+    .app-main.board-view {
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-bottom: 14px;
+    }
+    .board-view .kanban {
+      flex: 1 1 auto;
+      min-height: 0;
+      align-items: stretch;
+      overflow-y: hidden;
+      padding-bottom: 0;
+    }
+    .board-view .kcol {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-height: 100%;
+    }
+    .board-view .kcol-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 3px;
+      padding-bottom: 8px;
+    }
+  }
   .kcard {
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid var(--line);
