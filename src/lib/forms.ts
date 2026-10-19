@@ -10,6 +10,7 @@ import { PRIO, PROJECTS, STATUS, prName, stName } from "./constants";
 import { logEvent } from "./history";
 import { inviteUser } from "./invite";
 import type { CrmState, KpiAuto, Member, Task } from "./types";
+import { TASK_TYPES, TASK_TYPES_BY_DEPT, mergeTags, validateTask } from "./taskRules";
 import { fmtDate, todayISO, uid } from "./utils";
 import { useStore, type FormField } from "./store";
 
@@ -18,18 +19,6 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
   extra.concat(S.members.filter((m) => m.active).map((m) => ({ v: m.id, l: m.n })));
 
 // ---------------------------------------------------------------- TASKURI
-/** Tipurile de livrabil pe departament (id-urile stabile din seed) — devin
- *  etichete și leagă taskul de KPI-urile auto cu filtru de tag. Derivate din
- *  KPI-urile numărabile ale fiecărui departament (dashboard-ul KPI). */
-const TASK_TYPES_BY_DEPT: { dept: string; types: string[] }[] = [
-  { dept: "it", types: ["Bug", "Feature"] },
-  { dept: "mkt", types: ["Postare", "Video", "Campanie"] },
-  { dept: "sales", types: ["Sesiune 1:1"] },
-  { dept: "cons", types: ["Sesiune consiliere", "Raport"] },
-  { dept: "adm", types: ["Factură", "Raportare financiară"] },
-  { dept: "part", types: ["Propunere", "Parteneriat semnat", "Sponsorizare"] },
-];
-const TASK_TYPES = TASK_TYPES_BY_DEPT.flatMap((x) => x.types);
 /** Opțiunile „Tip livrabil" pentru UN departament (cel ales în formular): „fără" + tipurile
  *  acelui departament. Tipul deja setat pe task (`current`) rămâne selectabil chiar dacă
  *  departamentul s-a schimbat între timp, ca editarea să nu-l piardă. */
@@ -43,13 +32,6 @@ const isType = (g: string) => TASK_TYPES.some((t) => t.toLowerCase() === g.trim(
 const findType = (tags: string[]) => tags.find((g) => isType(g)) || "";
 const isProject = (g: string) => PROJECTS.some((p) => p.toLowerCase() === g.trim().toLowerCase());
 const findProject = (tags: string[]) => tags.find((g) => isProject(g)) || "";
-/** Etichetele unui task = tipul de livrabil (leagă de KPI) + proiectul ales; ambele opționale. */
-function mergeTags(ttype: string, project: string): string[] {
-  const out: string[] = [];
-  if (ttype.trim()) out.push(ttype.trim());
-  if (project.trim()) out.push(project.trim());
-  return out;
-}
 
 interface TaskFieldOpts {
   self?: { id: string; dept: string };
@@ -162,19 +144,6 @@ function applyAssignment(tk: Task, chosen: string, selfId: string) {
   }
 }
 
-/** Validarea formularului de task: titlu (≥3 după tăierea spaţiilor), departament, tip livrabil şi
- *  proiect sunt obligatorii. Responsabilul e opţional (gol = nealocat → backlog); la fel termen,
- *  recurenţă şi note. */
-function validateTask(d: Record<string, string>): Record<string, string> | null {
-  const e: Record<string, string> = {};
-  const title = (d.title || "").trim();
-  if (!title) e.title = "Titlul e obligatoriu.";
-  else if (title.length < 3) e.title = "Minim 3 caractere.";
-  if (!d.dept) e.dept = "Alege un departament.";
-  if (!d.ttype) e.ttype = "Alege tipul livrabilului.";
-  if (!d.project) e.project = "Alege un proiect.";
-  return Object.keys(e).length ? e : null;
-}
 
 export function newTask() {
   const { S, me, authEmail, flt, openForm } = st();
