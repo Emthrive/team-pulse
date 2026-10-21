@@ -209,9 +209,7 @@ export function Kpi() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 700, fontSize: 13.5 }}>{k.n}</div>
                           <div className="mini">
-                            {k.assignee ? memName(S, k.assignee) : "la nivel de departament"}
-                            {k.tag ? " · #" + k.tag : ""}
-                          </div>
+                            {k.assignee ? memName(S, k.assignee) : "la nivel de departament"}                          </div>
                         </div>
                         {elevated && (
                           <button

@@ -4,6 +4,7 @@
 //  din platformă). Fără roster hardcodat.
 // ============================================================
 import { kpiAutoVal } from "./calc";
+import { kpiTypeTag, retagTasks } from "./taskRules";
 import type { CrmState, Kpi } from "./types";
 import { monthISO, uid } from "./utils";
 
@@ -225,6 +226,19 @@ export function migrate(S: CrmState): boolean {
       k.unit = "buc";
     });
     S.version = 14;
+    changed = true;
+  }
+
+  // v15: eticheta (tipul de livrabil) unui KPI e mereu denumirea lui. KPI-urile cu altă etichetă
+  // (ex. „Postări publicate" #Postare) o primesc pe cea nouă, iar taskurile lor sunt re-etichetate,
+  // ca să rămână numărate. Cele generice („Taskuri finalizate", „Epice finalizate") rămân fără.
+  if ((S.version || 2) < 15) {
+    S.kpis.forEach((k) => {
+      const tag = kpiTypeTag(k);
+      retagTasks(S.tasks, k.dept, k.tag || "", tag);
+      k.tag = tag;
+    });
+    S.version = 15;
     changed = true;
   }
 

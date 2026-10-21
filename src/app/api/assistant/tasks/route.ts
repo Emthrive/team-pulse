@@ -109,14 +109,16 @@ export async function POST(req: Request) {
         adminEmails.includes((creator.email || "").toLowerCase()) || creator.platformRole === "manager";
 
       // --- validarea formularului (comună cu UI-ul) + verificările de valori ---
+      // Tipurile permise = etichetele KPI-urilor departamentului (ca în formular).
+      const types = typesForDept(S.kpis, input.dept);
       const errors: Record<string, string> =
-        validateTask({ title: input.title, dept: input.dept, ttype: input.type, project: input.project }) || {};
+        validateTask({ title: input.title, dept: input.dept, ttype: input.type, project: input.project }, types) || {};
       if (input.dept && !S.departments.some((d) => d.id === input.dept)) errors.dept = "Departament inexistent.";
       if (input.dept && !elevated && !memberDepts(creator).includes(input.dept)) {
         errors.dept = "Poți crea taskuri doar în departamentele tale.";
       }
-      if (input.type && input.dept && !typesForDept(input.dept).includes(input.type)) {
-        errors.ttype = `Tip invalid pentru departament. Permise: ${typesForDept(input.dept).join(", ") || "—"}.`;
+      if (input.type && input.dept && !types.includes(input.type)) {
+        errors.ttype = `Tip invalid pentru departament. Permise: ${types.join(", ") || "niciunul (lasă gol)"}.`;
       }
       if (input.project && !PROJECTS.includes(input.project)) {
         errors.project = `Proiect invalid. Permise: ${PROJECTS.join(", ")}.`;

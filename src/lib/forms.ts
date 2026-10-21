@@ -10,7 +10,15 @@ import { PRIO, PROJECTS, STATUS, prName, stName } from "./constants";
 import { logEvent } from "./history";
 import { inviteUser } from "./invite";
 import type { CrmState, KpiAuto, Member, Task } from "./types";
-import { TASK_TYPES, TASK_TYPES_BY_DEPT, mergeTags, validateTask } from "./taskRules";
+import {
+  LEGACY_TASK_TYPES,
+  allTaskTypes,
+  kpiTypeTag,
+  mergeTags,
+  retagTasks,
+  typesForDept,
+  validateTask,
+} from "./taskRules";
 import { fmtDate, todayISO, uid } from "./utils";
 import { useStore, type FormField } from "./store";
 
@@ -20,16 +28,23 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
 
 // ---------------------------------------------------------------- TASKURI
 /** Opțiunile „Tip livrabil" pentru UN departament (cel ales în formular): „fără" + tipurile
- *  acelui departament. Tipul deja setat pe task (`current`) rămâne selectabil chiar dacă
- *  departamentul s-a schimbat între timp, ca editarea să nu-l piardă. */
-function taskTypeOptionsForDept(deptId: string, current = ""): { v: string; l: string }[] {
+ *  acelui departament, adică etichetele KPI-urilor lui (vezi typesForDept). Tipul deja setat pe
+ *  task (`current`) rămâne selectabil chiar dacă între timp s-a schimbat departamentul sau KPI-ul,
+ *  ca editarea să nu-l piardă. */
+function taskTypeOptionsForDept(S: CrmState, deptId: string, current = ""): { v: string; l: string }[] {
   const out: { v: string; l: string }[] = [{ v: "", l: "fără" }];
-  (TASK_TYPES_BY_DEPT.find((x) => x.dept === deptId)?.types || []).forEach((t) => out.push({ v: t, l: t }));
+  typesForDept(S.kpis, deptId).forEach((t) => out.push({ v: t, l: t }));
   if (current && !out.some((o) => o.v === current)) out.push({ v: current, l: current });
   return out;
 }
-const isType = (g: string) => TASK_TYPES.some((t) => t.toLowerCase() === g.trim().toLowerCase());
-const findType = (tags: string[]) => tags.find((g) => isType(g)) || "";
+/** Tipul unui task = prima etichetă care e tip: din KPI-urile de acum sau din lista veche. */
+const findType = (S: CrmState, tags: string[]) => {
+  const known = [...allTaskTypes(S.kpis), ...LEGACY_TASK_TYPES].map((t) => t.toLowerCase());
+  return tags.find((g) => known.includes(g.trim().toLowerCase())) || "";
+};
+/** Validarea formularului, cu tipurile departamentului ales (tipul e obligatoriu doar dacă există). */
+const validateWithTypes = (S: CrmState) => (d: Record<string, string>) =>
+  validateTask(d, typesForDept(S.kpis, d.dept));
 const isProject = (g: string) => PROJECTS.some((p) => p.toLowerCase() === g.trim().toLowerCase());
 const findProject = (tags: string[]) => tags.find((g) => isProject(g)) || "";
 
@@ -93,14 +108,14 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     fields.push({ key: "status", label: "Status", type: "select", value: t ? t.status : "todo", options: STATUS.map((s) => ({ v: s.id, l: s.n })) });
   }
 
-  const curType = t ? findType(t.tags || []) : "";
+  const curType = t ? findType(S, t.tags || []) : "";
   fields.push({
     key: "ttype",
     label: "Tip livrabil (se leagă automat de KPI)",
     type: "select",
     value: curType,
     // Opțiunile depind de departamentul ales — se re-filtrează când schimbi departamentul.
-    optionsFn: (d) => taskTypeOptionsForDept(d.dept, d.ttype),
+    optionsFn: (d) => taskTypeOptionsForDept(S, d.dept, d.ttype),
   });
   // Proiectul taskului — listă fixă (înlocuiește etichetele libere de dinainte).
   fields.push({
@@ -159,7 +174,7 @@ export function newTask() {
   openForm({
     title: "Task nou",
     fields: taskFields(S, null, flt.dept, { self, deptChoices, forNew: true }),
-    validate: validateTask,
+    validate: validateWithTypes(S),
     onSubmit: (d, draft) => {
       if (!d.title.trim()) return;
       const t: Task = {
@@ -203,7 +218,7 @@ export function editTask(id: string) {
     title: "Editează task",
     fields: taskFields(S, t, "", { deptChoices }),
     // Validăm la editare doar taskurile create sub regulile noi (version 1); cele vechi rămân permisive.
-    validate: t.version === 1 ? validateTask : undefined,
+    validate: t.version === 1 ? validateWithTypes(S) : undefined,
     onSubmit: (d, draft) => {
       const tk = draft.tasks.find((x) => x.id === id);
       if (!tk) return;
@@ -284,7 +299,6 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
         { v: "tasks_created", l: "Auto · taskuri create în lună" },
       ],
     },
-    { key: "tag", label: "Filtru etichetă (opţional, doar la auto)", value: k ? k.tag || "" : "", ph: "ex: Video" },
     { key: "dept", label: "Departament", type: "select", value: k ? k.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
     { key: "target", label: "Ţintă lunară", type: "number", value: k ? k.target : 0, step: "any" },
   ];
@@ -307,7 +321,8 @@ export function newKpi() {
         unit: "buc", // fără procente — se numără bucăţi (taskuri/epice)
         vals: {},
         auto: (d.auto || "") as KpiAuto,
-        tag: (d.tag || "").trim(),
+        // Eticheta = denumirea KPI-ului → apare singur ca „Tip livrabil" la taskurile departamentului.
+        tag: kpiTypeTag({ n: d.n, auto: (d.auto || "") as KpiAuto }),
       });
     },
   });
@@ -324,12 +339,16 @@ export function editKpi(id: string) {
     onSubmit: (d, draft) => {
       const kk = draft.kpis.find((x) => x.id === id);
       if (!kk) return;
+      const oldTag = kk.tag || "";
+      const oldDept = kk.dept;
       kk.n = d.n.trim() || kk.n;
       kk.dept = d.dept;
       kk.target = Number(d.target) || 0;
       kk.unit = "buc";
       kk.auto = (d.auto || "") as KpiAuto;
-      kk.tag = (d.tag || "").trim();
+      kk.tag = kpiTypeTag(kk);
+      // Redenumit → taskurile legate primesc noul nume ca tip, ca să rămână numărate.
+      retagTasks(draft.tasks, oldDept, oldTag, kk.tag);
     },
     // Ştergerea distruge şi istoricul (snapshot-uri) — doar adminul.
     onDelete: isAdminEmail(authEmail)
