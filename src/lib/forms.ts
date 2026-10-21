@@ -9,7 +9,7 @@ import { currentMemberId, memberDepts, memName, myDeptIds } from "./calc";
 import { PRIO, PROJECTS, STATUS, prName, stName } from "./constants";
 import { logEvent } from "./history";
 import { inviteUser } from "./invite";
-import type { CrmState, KpiAuto, Member, Task } from "./types";
+import type { CrmState, Member, Task } from "./types";
 import {
   LEGACY_TASK_TYPES,
   allTaskTypes,
@@ -298,18 +298,6 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
   return [
     { key: "n", label: "Denumire KPI", value: k ? k.n : "", ph: "ex: Sesiuni 1:1 vândute" },
     {
-      key: "auto",
-      label: "Sursă valoare",
-      type: "select",
-      value: k ? k.auto || "tasks_done" : "tasks_done",
-      options: [
-        { v: "tasks_done", l: "Auto · taskuri finalizate în lună" },
-        { v: "epics_done", l: "Auto · Epice finalizate în lună" },
-        { v: "subtasks_done", l: "Auto · taskuri bifate în Epice, în lună" },
-        { v: "tasks_created", l: "Auto · taskuri create în lună" },
-      ],
-    },
-    {
       // Doar la creare: generic = numără tot departamentul (fără etichetă); altfel eticheta se
       // copiază din denumire şi rămâne fixă (redenumirea KPI-ului nu o schimbă).
       key: "scope",
@@ -343,7 +331,7 @@ export function newKpi() {
         target: Number(d.target) || 0,
         unit: "buc", // fără procente — se numără bucăţi (taskuri/epice)
         vals: {},
-        auto: (d.auto || "") as KpiAuto,
+        auto: "tasks_done", // orice KPI numără taskurile finalizate în lună (de tipul lui sau toate)
         // Eticheta = denumirea KPI-ului → apare singur ca „Tip livrabil" la taskurile departamentului.
         tag: d.scope === "all" ? "" : d.n.trim(),
       });
@@ -366,7 +354,6 @@ export function editKpi(id: string) {
       kk.dept = d.dept;
       kk.target = Number(d.target) || 0;
       kk.unit = "buc";
-      kk.auto = (d.auto || "") as KpiAuto;
     },
     // Ştergerea distruge şi istoricul (snapshot-uri) — doar adminul.
     onDelete: isAdminEmail(authEmail)
