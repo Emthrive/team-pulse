@@ -71,37 +71,40 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     ? S.members.filter((m) => m.id === lockAssignee).map((m) => ({ v: m.id, l: m.n }))
     : memberOpts(S, [{ v: "", l: "nealocat (backlog echipă)" }]);
 
+  const curType = t ? findType(S, t.tags || []) : "";
+  // Ordinea: întâi câmpurile obligatorii (marcate cu *), apoi cele opţionale.
   const fields: FormField[] = [
-    { key: "title", label: "Denumire task", value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
-    {
-      key: "assignee",
-      label: lockAssignee ? "Responsabil (tu)" : "Responsabil",
-      type: "select",
-      value: lockAssignee || (t ? t.assignee : self?.id || ""),
-      options: assigneeOptions,
-      // La alegerea responsabilului, precompletăm departamentul cu al lui (rămâne editabil).
-      // Dacă departamentul se schimbă, resetăm și „Tip livrabil" (tipurile sunt per-departament).
-      onChange: (v, d) => {
-        if (!v) return;
-        const m = S.members.find((x) => x.id === v);
-        if (!m) return;
-        const nd = memberDepts(m)[0] || m.dept;
-        const out: Record<string, string> = { dept: nd };
-        if (nd !== d.dept) out.ttype = ""; // departament schimbat → resetăm tipul de livrabil
-        return out;
-      },
-    },
+    { key: "title", label: "Denumire task", required: true, value: t ? t.title : "", ph: "ex: Postări SuccesPlus august" },
     {
       key: "dept",
       label: restricted ? "Departament (ale tale)" : "Departament",
+      required: true,
       type: "select",
       value: t ? t.dept : fallbackDept,
       options: deptOptions,
-      // Schimbarea departamentului invalidează tipul de livrabil (e specific departamentului).
-      onChange: () => ({ ttype: "" }),
+      // Schimbarea departamentului invalidează tipul de livrabil (e specific departamentului);
+      // _deptSet ţine minte că l-ai ales tu, ca responsabilul să nu-l mai suprascrie.
+      onChange: () => ({ ttype: "", _deptSet: "1" }),
     },
-    { key: "deadline", label: "Termen limită", type: "date", value: t ? t.deadline : "" },
-    { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "normala", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
+    {
+      key: "ttype",
+      label: "Tip livrabil (se leagă automat de KPI)",
+      // Obligatoriu doar dacă departamentul ales are tipuri (KPI-uri cu etichetă).
+      required: (d) => typesForDept(S.kpis, d.dept).length > 0,
+      type: "select",
+      value: curType,
+      // Opțiunile depind de departamentul ales — se re-filtrează când schimbi departamentul.
+      optionsFn: (d) => taskTypeOptionsForDept(S, d.dept, d.ttype),
+    },
+    // Proiectul taskului — listă fixă (înlocuiește etichetele libere de dinainte).
+    {
+      key: "project",
+      label: "Proiect",
+      required: true,
+      type: "select",
+      value: t ? findProject(t.tags || []) : "",
+      options: [{ v: "", l: "fără" }, ...PROJECTS.map((p) => ({ v: p, l: p }))],
+    },
   ];
 
   // Status doar la editare — la creare taskul e mereu „De făcut". Progresul se
@@ -110,35 +113,40 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
     fields.push({ key: "status", label: "Status", type: "select", value: t ? t.status : "todo", options: STATUS.map((s) => ({ v: s.id, l: s.n })) });
   }
 
-  const curType = t ? findType(S, t.tags || []) : "";
-  fields.push({
-    key: "ttype",
-    label: "Tip livrabil (se leagă automat de KPI)",
-    type: "select",
-    value: curType,
-    // Opțiunile depind de departamentul ales — se re-filtrează când schimbi departamentul.
-    optionsFn: (d) => taskTypeOptionsForDept(S, d.dept, d.ttype),
-  });
-  // Proiectul taskului — listă fixă (înlocuiește etichetele libere de dinainte).
-  fields.push({
-    key: "project",
-    label: "Proiect",
-    type: "select",
-    value: t ? findProject(t.tags || []) : "",
-    options: [{ v: "", l: "fără" }, ...PROJECTS.map((p) => ({ v: p, l: p }))],
-  });
-  fields.push({
-    key: "recurring",
-    label: "Recurenţă",
-    type: "select",
-    value: t ? t.recurring || "" : "",
-    options: [
-      { v: "", l: "fără" },
-      { v: "saptamanal", l: "Săptămânal" },
-      { v: "lunar", l: "Lunar" },
-    ],
-  });
-  fields.push({ key: "notes", label: "Note", type: "textarea", value: t ? t.notes : "" });
+  fields.push(
+    {
+      key: "assignee",
+      label: lockAssignee ? "Responsabil (tu)" : "Responsabil",
+      type: "select",
+      value: lockAssignee || (t ? t.assignee : self?.id || ""),
+      options: assigneeOptions,
+      // Precompletăm departamentul cu al responsabilului doar dacă nu l-ai ales tu deja la creare;
+      // dacă departamentul se schimbă, resetăm și „Tip livrabil" (tipurile sunt per-departament).
+      onChange: (v, d) => {
+        if (!v || t || d._deptSet) return;
+        const m = S.members.find((x) => x.id === v);
+        if (!m) return;
+        const nd = memberDepts(m)[0] || m.dept;
+        const out: Record<string, string> = { dept: nd };
+        if (nd !== d.dept) out.ttype = "";
+        return out;
+      },
+    },
+    { key: "deadline", label: "Termen limită", type: "date", value: t ? t.deadline : "" },
+    { key: "priority", label: "Prioritate", type: "select", value: t ? t.priority : "normala", options: PRIO.map((p) => ({ v: p.id, l: p.n })) },
+    {
+      key: "recurring",
+      label: "Recurenţă",
+      type: "select",
+      value: t ? t.recurring || "" : "",
+      options: [
+        { v: "", l: "fără" },
+        { v: "saptamanal", l: "Săptămânal" },
+        { v: "lunar", l: "Lunar" },
+      ],
+    },
+    { key: "notes", label: "Note", type: "textarea", value: t ? t.notes : "" },
+  );
   return fields;
 }
 

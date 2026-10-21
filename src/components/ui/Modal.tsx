@@ -165,6 +165,9 @@ export function Modal() {
             <div className="f" key={fl.key}>
               <label className="lbl">
                 {fl.label}
+                {(typeof fl.required === "function" ? fl.required(data) : fl.required) && (
+                  <span style={{ color: "var(--color-red)", marginLeft: 3 }}>*</span>
+                )}
                 {fl.type === "range" && <> · <span className="rv">{v}</span></>}
               </label>
               {ctl}

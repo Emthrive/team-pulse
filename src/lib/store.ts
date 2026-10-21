@@ -30,6 +30,8 @@ export interface FormField {
   min?: number;
   max?: number;
   step?: number | string;
+  /** Câmp obligatoriu → eticheta primeşte * roşie (poate depinde de valorile curente). */
+  required?: boolean | ((d: Record<string, string>) => boolean);
   /** Câmpul apare doar când condiţia pe valorile curente ale formularului e adevărată. */
   showIf?: (d: Record<string, string>) => boolean;
   /** La schimbarea valorii, returnează câmpuri derivate de precompletat (ex: dept din responsabil). */
