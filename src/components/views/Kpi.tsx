@@ -39,7 +39,12 @@ export function Kpi() {
   const setTab = useStore((s) => s.setTab);
   const { elevated } = useRole();
 
-  const byDept = S.departments.map((d) => ({ d, ks: S.kpis.filter((k) => k.dept === d.id) }));
+  // Ordinea în departament: KPI-urile normale, apoi cele de sistem — „Epice finalizate" ultimul.
+  const rank = (k: (typeof S.kpis)[number]) => (!k.system ? 0 : k.auto === "epics_done" ? 2 : 1);
+  const byDept = S.departments.map((d) => ({
+    d,
+    ks: S.kpis.filter((k) => k.dept === d.id).sort((a, b) => rank(a) - rank(b)),
+  }));
   const range = monthsInRange(kstart, kend);
   const singleMonth = range.length === 1;
   const rangeLabel = singleMonth
