@@ -107,6 +107,8 @@ export interface Kpi {
   target: number;
   unit: string;
   vals: Record<string, number>;
+  /** KPI de sistem („Taskuri finalizate", „Epice finalizate"): creat automat, nu se editează. */
+  system?: boolean;
   /** Setat → valoarea lunii se calculează automat din taskuri (fără +/−). */
   auto?: KpiAuto;
   /** Filtru opțional pe etichetă pentru KPI-urile automate (ex: „Video”). */

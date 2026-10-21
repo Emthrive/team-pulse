@@ -253,6 +253,22 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v17: KPI-urile de sistem — „Taskuri finalizate" (generic, numără tot departamentul) şi
+  // „Epice finalizate" — se marchează system: nu mai pot fi editate. Fiecare departament are unul
+  // „Taskuri finalizate" (se adaugă dacă lipseşte).
+  if ((S.version || 2) < 17) {
+    S.kpis.forEach((k) => {
+      const generic = k.auto === "tasks_done" && !(k.tag || "").trim();
+      if (k.auto === "epics_done" || generic) k.system = true;
+    });
+    S.departments.forEach((d) => {
+      if (S.kpis.some((k) => k.dept === d.id && k.system && k.auto === "tasks_done")) return;
+      S.kpis.push({ id: uid(), n: "Taskuri finalizate", dept: d.id, assignee: "", target: 10, unit: "buc", vals: {}, auto: "tasks_done", tag: "", system: true });
+    });
+    S.version = 17;
+    changed = true;
+  }
+
   // Arhivare automată (rulează mereu, idempotent): în Finalizat de peste 7 zile
   // de la ULTIMA finalizare (completedAt se resetează la reopen → cronometrul repornește).
   {

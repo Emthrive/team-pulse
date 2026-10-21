@@ -343,7 +343,7 @@ export function editKpi(id: string) {
   const { S, authEmail, openForm } = st();
   if (!S) return;
   const k = S.kpis.find((x) => x.id === id);
-  if (!k) return;
+  if (!k || k.system) return; // KPI-urile de sistem nu se editează
   openForm({
     title: "Editează KPI",
     fields: kpiFields(S, k),
@@ -486,14 +486,49 @@ export function editMember(id: string) {
 }
 
 // ---------------------------------------------------------------- DEPARTAMENTE / PONDERI
+const epicsField = (on: boolean): FormField => ({
+  key: "epics",
+  label: "KPI „Epice finalizate”",
+  type: "select",
+  value: on ? "da" : "nu",
+  options: [
+    { v: "nu", l: "Nu se afişează" },
+    { v: "da", l: "Se afişează" },
+  ],
+});
+/** Porneşte/opreşte KPI-ul de sistem „Epice finalizate" pentru un departament. Oprirea îl şterge
+ *  (cu istoricul lui); repornirea îl creează din nou, gol. */
+function setDeptEpics(draft: CrmState, deptId: string, on: boolean) {
+  const has = draft.kpis.some((k) => k.dept === deptId && k.auto === "epics_done");
+  if (on && !has)
+    draft.kpis.push({ id: uid(), n: "Epice finalizate", dept: deptId, assignee: "", target: 2, unit: "buc", vals: {}, auto: "epics_done", tag: "", system: true });
+  if (!on && has) draft.kpis = draft.kpis.filter((k) => !(k.dept === deptId && k.auto === "epics_done"));
+}
+
 export function newDept() {
   const { S, openForm } = st();
   if (!S) return;
   openForm({
     title: "Departament nou",
-    fields: [{ key: "n", label: "Denumire", value: "" }],
+    fields: [{ key: "n", label: "Denumire", value: "" }, epicsField(false)],
     onSubmit: (d, draft) => {
-      if (d.n.trim()) draft.departments.push({ id: uid(), n: d.n.trim() });
+      if (!d.n.trim()) return;
+      const id = uid();
+      draft.departments.push({ id, n: d.n.trim() });
+      // Fiecare departament primeşte automat KPI-ul de sistem „Taskuri finalizate" (numără tot).
+      draft.kpis.push({
+        id: uid(),
+        n: "Taskuri finalizate",
+        dept: id,
+        assignee: "",
+        target: 10,
+        unit: "buc",
+        vals: {},
+        auto: "tasks_done",
+        tag: "",
+        system: true,
+      });
+      setDeptEpics(draft, id, d.epics === "da");
     },
   });
 }
@@ -505,11 +540,15 @@ export function editDept(id: string) {
   if (!d) return;
   openForm({
     title: "Editează departamentul",
-    fields: [{ key: "n", label: "Denumire", value: d.n }],
+    fields: [
+      { key: "n", label: "Denumire", value: d.n },
+      epicsField(S.kpis.some((k) => k.dept === id && k.auto === "epics_done")),
+    ],
     onSubmit: (x, draft) => {
       const dd = draft.departments.find((z) => z.id === id);
       if (!dd) return;
       dd.n = x.n.trim() || dd.n;
+      setDeptEpics(draft, id, x.epics === "da");
     },
     // Ştergerea unui departament şterge şi taskurile/KPI-urile lui — doar adminul.
     onDelete: isAdminEmail(authEmail)
