@@ -13,9 +13,7 @@ import type { CrmState, KpiAuto, Member, Task } from "./types";
 import {
   LEGACY_TASK_TYPES,
   allTaskTypes,
-  kpiTypeTag,
   mergeTags,
-  retagTasks,
   typesForDept,
   validateTask,
 } from "./taskRules";
@@ -33,7 +31,11 @@ const memberOpts = (S: CrmState, extra: { v: string; l: string }[] = []) =>
  *  ca editarea să nu-l piardă. */
 function taskTypeOptionsForDept(S: CrmState, deptId: string, current = ""): { v: string; l: string }[] {
   const out: { v: string; l: string }[] = [{ v: "", l: "fără" }];
-  typesForDept(S.kpis, deptId).forEach((t) => out.push({ v: t, l: t }));
+  // Valoarea e eticheta (fixă), textul e numele actual al KPI-ului — corect şi după redenumire.
+  typesForDept(S.kpis, deptId).forEach((t) => {
+    const k = S.kpis.find((x) => x.dept === deptId && (x.tag || "").trim().toLowerCase() === t.toLowerCase());
+    out.push({ v: t, l: k ? k.n : t });
+  });
   if (current && !out.some((o) => o.v === current)) out.push({ v: current, l: current });
   return out;
 }
@@ -299,6 +301,19 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
         { v: "tasks_created", l: "Auto · taskuri create în lună" },
       ],
     },
+    {
+      // Doar la creare: generic = numără tot departamentul (fără etichetă); altfel eticheta se
+      // copiază din denumire şi rămâne fixă (redenumirea KPI-ului nu o schimbă).
+      key: "scope",
+      showIf: () => !k,
+      label: "Ce numără",
+      type: "select",
+      value: k ? (k.tag ? "type" : "all") : "type",
+      options: [
+        { v: "type", l: "Doar taskurile de tipul ăsta (apare la „Tip livrabil”)" },
+        { v: "all", l: "Toate taskurile din departament" },
+      ],
+    },
     { key: "dept", label: "Departament", type: "select", value: k ? k.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
     { key: "target", label: "Ţintă lunară", type: "number", value: k ? k.target : 0, step: "any" },
   ];
@@ -322,7 +337,7 @@ export function newKpi() {
         vals: {},
         auto: (d.auto || "") as KpiAuto,
         // Eticheta = denumirea KPI-ului → apare singur ca „Tip livrabil" la taskurile departamentului.
-        tag: kpiTypeTag({ n: d.n, auto: (d.auto || "") as KpiAuto }),
+        tag: d.scope === "all" ? "" : d.n.trim(),
       });
     },
   });
@@ -339,16 +354,11 @@ export function editKpi(id: string) {
     onSubmit: (d, draft) => {
       const kk = draft.kpis.find((x) => x.id === id);
       if (!kk) return;
-      const oldTag = kk.tag || "";
-      const oldDept = kk.dept;
-      kk.n = d.n.trim() || kk.n;
+      kk.n = d.n.trim() || kk.n; // eticheta rămâne cea de la creare → taskurile rămân legate
       kk.dept = d.dept;
       kk.target = Number(d.target) || 0;
       kk.unit = "buc";
       kk.auto = (d.auto || "") as KpiAuto;
-      kk.tag = kpiTypeTag(kk);
-      // Redenumit → taskurile legate primesc noul nume ca tip, ca să rămână numărate.
-      retagTasks(draft.tasks, oldDept, oldTag, kk.tag);
     },
     // Ştergerea distruge şi istoricul (snapshot-uri) — doar adminul.
     onDelete: isAdminEmail(authEmail)

@@ -242,6 +242,17 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v16: KPI-ul generic de taskuri numără tot departamentul — fără etichetă. Repară cazul în care
+  // redenumirea lui (ex. „Taskuri finalizate" → „Taskuri") i-a pus din greşeală o etichetă.
+  if ((S.version || 2) < 16) {
+    S.kpis.forEach((k) => {
+      const tag = (k.tag || "").trim().toLowerCase();
+      if (k.auto === "tasks_done" && (tag === "taskuri" || tag === "taskuri finalizate")) k.tag = "";
+    });
+    S.version = 16;
+    changed = true;
+  }
+
   // Arhivare automată (rulează mereu, idempotent): în Finalizat de peste 7 zile
   // de la ULTIMA finalizare (completedAt se resetează la reopen → cronometrul repornește).
   {
