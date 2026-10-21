@@ -280,7 +280,6 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
       options: [
         { v: "tasks_done", l: "Auto · taskuri finalizate în lună" },
         { v: "epics_done", l: "Auto · Epice finalizate în lună" },
-        { v: "on_time_rate", l: "Auto · % finalizate la termen" },
         { v: "subtasks_done", l: "Auto · taskuri bifate în Epice, în lună" },
         { v: "tasks_created", l: "Auto · taskuri create în lună" },
       ],
@@ -288,7 +287,6 @@ function kpiFields(S: CrmState, k: CrmState["kpis"][number] | null): FormField[]
     { key: "tag", label: "Filtru etichetă (opţional, doar la auto)", value: k ? k.tag || "" : "", ph: "ex: Video" },
     { key: "dept", label: "Departament", type: "select", value: k ? k.dept : S.departments[0].id, options: S.departments.map((d) => ({ v: d.id, l: d.n })) },
     { key: "target", label: "Ţintă lunară", type: "number", value: k ? k.target : 0, step: "any" },
-    { key: "unit", label: "Unitate", value: k ? k.unit : "", ph: "buc / RON / % / sesiuni" },
   ];
 }
 
@@ -306,7 +304,7 @@ export function newKpi() {
         dept: d.dept,
         assignee: "",
         target: Number(d.target) || 0,
-        unit: d.unit,
+        unit: "buc", // fără procente — se numără bucăţi (taskuri/epice)
         vals: {},
         auto: (d.auto || "") as KpiAuto,
         tag: (d.tag || "").trim(),
@@ -329,7 +327,7 @@ export function editKpi(id: string) {
       kk.n = d.n.trim() || kk.n;
       kk.dept = d.dept;
       kk.target = Number(d.target) || 0;
-      kk.unit = d.unit;
+      kk.unit = "buc";
       kk.auto = (d.auto || "") as KpiAuto;
       kk.tag = (d.tag || "").trim();
     },

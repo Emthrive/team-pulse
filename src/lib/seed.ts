@@ -219,6 +219,15 @@ export function migrate(S: CrmState): boolean {
     changed = true;
   }
 
+  // v14: fără procente la KPI — unitatea e mereu „buc" (se numără bucăţi: taskuri, epice).
+  if ((S.version || 2) < 14) {
+    S.kpis.forEach((k) => {
+      k.unit = "buc";
+    });
+    S.version = 14;
+    changed = true;
+  }
+
   // Arhivare automată (rulează mereu, idempotent): în Finalizat de peste 7 zile
   // de la ULTIMA finalizare (completedAt se resetează la reopen → cronometrul repornește).
   {
