@@ -26,6 +26,8 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
   const [subInput, setSubInput] = useState("");
   const [histOpen, setHistOpen] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
+  // Un task devine Epic la primul subtask: până atunci arătăm doar „Creează Epic".
+  const [makingEpic, setMakingEpic] = useState(false);
 
   const t = S.tasks.find((x) => x.id === taskId);
 
@@ -147,10 +149,16 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
           </div>
         )}
 
+        {subs.length === 0 && !makingEpic ? (
+          <button className="btn ghost sm" style={{ marginTop: 4 }} onClick={() => setMakingEpic(true)}>
+            Creează Epic
+          </button>
+        ) : (
         <div className="subadd">
           <input
+            autoFocus={subs.length === 0}
             value={subInput}
-            placeholder="Task nou în Epic…"
+            placeholder={subs.length === 0 ? "Primul task din Epic…" : "Task nou în Epic…"}
             onChange={(e) => setSubInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -169,6 +177,7 @@ export function TaskDetailModal({ taskId, onClose }: { taskId: string; onClose: 
             Adaugă
           </button>
         </div>
+        )}
 
 
         {histDesc.length > 0 && (
