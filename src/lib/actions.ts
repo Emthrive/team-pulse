@@ -8,6 +8,7 @@ import { prName, stName } from "./constants";
 import { seed } from "./seed";
 import { logEvent } from "./history";
 import { useStore } from "./store";
+import { applyStatusChange } from "./taskRules";
 import type { CrmState } from "./types";
 import { todayISO, uid } from "./utils";
 
@@ -106,24 +107,8 @@ export function moveTask(id: string, newStatus: import("./types").StatusId) {
   st().mutate((St) => {
     const tk = St.tasks.find((x) => x.id === id);
     if (!tk) return;
-    // Mutat în „Finalizat” → aceleași efecte ca „Marchez finalizat”.
-    if (newStatus === "gata" && tk.status !== "gata") {
-      tk.progress = 100;
-      tk.completedAt = todayISO();
-      tk.completions = tk.completions || [];
-      tk.completions.push({
-        d: todayISO(),
-        onTime: !tk.deadline || todayISO() <= tk.deadline,
-        n: (tk.subtasks || []).length,
-      });
-    }
-    // Scos din „Finalizat” → ca „Redeschid”; iese și din arhivă, cronometrul repornește la re-finalizare.
-    if (tk.status === "gata" && newStatus !== "gata") {
-      tk.completedAt = "";
-      tk.archived = false;
-      if (tk.completions && tk.completions.length) tk.completions.pop();
-    }
-    tk.status = newStatus;
+    // Finalizat → jurnal de finalizări (KPI); scos din Finalizat → ca „Redeschid” (comun cu API-ul asistentului).
+    applyStatusChange(tk, newStatus, todayISO());
     logEvent(tk, myId, "status", stName(newStatus));
   });
 }

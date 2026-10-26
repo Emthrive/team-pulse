@@ -1,6 +1,6 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/server/adminFirebase";
+import { assistantAuthorized } from "@/lib/server/assistantAuth";
 import { memberDepts } from "@/lib/calc";
 import { CRM_DOC_ID, PRIO } from "@/lib/constants";
 import { mergeTags, projectsOf, typesForDept, validateTask } from "@/lib/taskRules";
@@ -23,17 +23,6 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .filter(Boolean);
 
 const MAX_EVENTS = 40; // la fel ca history.ts (doc-ul CRM are limită ~1MB)
-
-/** Token-ul din header, comparat în timp constant. Fără token configurat → refuz tot. */
-function authorized(req: Request): boolean {
-  const expected = process.env.ASSISTANT_API_TOKEN || "";
-  if (!expected) return false;
-  const header = req.headers.get("authorization") || "";
-  const got = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  const a = Buffer.from(got);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 function pushEvent(t: Task, by: string, k: TaskEventKind, v?: string) {
   const e: TaskEvent = { d: new Date().toISOString(), by, k };
@@ -71,7 +60,7 @@ class HttpError extends Error {
 }
 
 export async function POST(req: Request) {
-  if (!authorized(req)) {
+  if (!assistantAuthorized(req)) {
     return NextResponse.json({ error: "Neautorizat." }, { status: 401 });
   }
 

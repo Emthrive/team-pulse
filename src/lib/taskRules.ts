@@ -5,7 +5,7 @@
 // ============================================================
 
 import { DEFAULT_PROJECTS } from "./constants";
-import type { Kpi, Task } from "./types";
+import type { Kpi, StatusId, Task } from "./types";
 
 /** Tipurile de livrabil ale unui departament = etichetele („Filtru etichetă") KPI-urilor lui.
  *  Eticheta e chiar legătura task → KPI (KPI-ul automat numără taskurile cu eticheta lui), deci
@@ -83,4 +83,27 @@ export function retagTasks(tasks: Task[], deptId: string, oldTag: string, newTag
 /** Proiectele din baza de date (cu fallback pe lista implicită până rulează migrarea). */
 export function projectsOf(S: { projects?: string[] }): string[] {
   return S.projects && S.projects.length ? S.projects : DEFAULT_PROJECTS;
+}
+
+/** Efectele mutării unui task în alt status (board, drag & drop, asistent) — fără jurnal:
+ *  - în „Finalizat" → progres 100, data finalizării, intrare în jurnalul de finalizări (KPI);
+ *  - scos din „Finalizat" → ca „Redeschid": iese din arhivă, finalizarea nu mai e valabilă.
+ *  `today` = YYYY-MM-DD. */
+export function applyStatusChange(tk: Task, newStatus: StatusId, today: string) {
+  if (newStatus === "gata" && tk.status !== "gata") {
+    tk.progress = 100;
+    tk.completedAt = today;
+    tk.completions = tk.completions || [];
+    tk.completions.push({
+      d: today,
+      onTime: !tk.deadline || today <= tk.deadline,
+      n: (tk.subtasks || []).length,
+    });
+  }
+  if (tk.status === "gata" && newStatus !== "gata") {
+    tk.completedAt = "";
+    tk.archived = false;
+    if (tk.completions && tk.completions.length) tk.completions.pop();
+  }
+  tk.status = newStatus;
 }
