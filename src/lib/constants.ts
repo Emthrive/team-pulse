@@ -24,7 +24,7 @@ export const CRIT: { id: string; n: string }[] = [
 ];
 
 /** Proiectele interne (listă fixă deocamdată) — înlocuiesc etichetele libere de pe taskuri. */
-export const PROJECTS = ["TeamPulse", "Emthrive", "CRM", "SuccesPlus"];
+export const PROJECTS = ["TeamPulse", "Emthrive", "CRM", "SuccesPlus", "ConsilierPlatform"];
 
 export const TABS: { id: TabId; n: string }[] = [
   { id: "tasks", n: "Taskuri" },
