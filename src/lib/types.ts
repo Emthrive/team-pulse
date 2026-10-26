@@ -137,6 +137,8 @@ export interface CrmState {
   kpis: Kpi[];
   evals: Evaluation[];
   weights: Weights;
+  /** Proiectele (etichete pe taskuri), gestionate din Setări. */
+  projects?: string[];
 }
 
 export interface MemberStats {

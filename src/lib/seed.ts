@@ -4,6 +4,7 @@
 //  din platformă). Fără roster hardcodat.
 // ============================================================
 import { kpiAutoVal } from "./calc";
+import { DEFAULT_PROJECTS } from "./constants";
 import { kpiTypeTag, retagTasks } from "./taskRules";
 import type { CrmState, Kpi } from "./types";
 import { monthISO, uid } from "./utils";
@@ -57,6 +58,7 @@ export function seed(): CrmState {
     kpis: K,
     evals: [],
     weights: { exec: 40, kpi: 30, eval: 30 },
+    projects: [...DEFAULT_PROJECTS],
   };
 }
 
@@ -266,6 +268,13 @@ export function migrate(S: CrmState): boolean {
       S.kpis.push({ id: uid(), n: "Taskuri finalizate", dept: d.id, assignee: "", target: 10, unit: "buc", vals: {}, auto: "tasks_done", tag: "", system: true });
     });
     S.version = 17;
+    changed = true;
+  }
+
+  // v18: proiectele trec din cod în baza de date (gestionate din Setări).
+  if ((S.version || 2) < 18) {
+    if (!Array.isArray(S.projects) || !S.projects.length) S.projects = [...DEFAULT_PROJECTS];
+    S.version = 18;
     changed = true;
   }
 

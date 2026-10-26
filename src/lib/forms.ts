@@ -6,7 +6,7 @@
 // ============================================================
 import { isAdminEmail, isElevated } from "./admin";
 import { currentMemberId, memberDepts, memName, myDeptIds } from "./calc";
-import { PRIO, PROJECTS, STATUS, prName, stName } from "./constants";
+import { PRIO, STATUS, prName, stName } from "./constants";
 import { logEvent } from "./history";
 import { inviteUser } from "./invite";
 import type { CrmState, Member, Task } from "./types";
@@ -14,6 +14,7 @@ import {
   LEGACY_TASK_TYPES,
   allTaskTypes,
   mergeTags,
+  projectsOf,
   typesForDept,
   validateTask,
 } from "./taskRules";
@@ -47,8 +48,8 @@ const findType = (S: CrmState, tags: string[]) => {
 /** Validarea formularului, cu tipurile departamentului ales (tipul e obligatoriu doar dacă există). */
 const validateWithTypes = (S: CrmState) => (d: Record<string, string>) =>
   validateTask(d, typesForDept(S.kpis, d.dept));
-const isProject = (g: string) => PROJECTS.some((p) => p.toLowerCase() === g.trim().toLowerCase());
-const findProject = (tags: string[]) => tags.find((g) => isProject(g)) || "";
+const isProject = (S: CrmState, g: string) => projectsOf(S).some((p) => p.toLowerCase() === g.trim().toLowerCase());
+const findProject = (S: CrmState, tags: string[]) => tags.find((g) => isProject(S, g)) || "";
 
 interface TaskFieldOpts {
   self?: { id: string; dept: string };
@@ -102,8 +103,8 @@ function taskFields(S: CrmState, t: Task | null, fltDept: string, opts: TaskFiel
       label: "Proiect",
       required: true,
       type: "select",
-      value: t ? findProject(t.tags || []) : "",
-      options: [{ v: "", l: "fără" }, ...PROJECTS.map((p) => ({ v: p, l: p }))],
+      value: t ? findProject(S, t.tags || []) : "",
+      options: [{ v: "", l: "fără" }, ...projectsOf(S).map((p) => ({ v: p, l: p }))],
     },
   ];
 
@@ -503,6 +504,48 @@ function setDeptEpics(draft: CrmState, deptId: string, on: boolean) {
   if (on && !has)
     draft.kpis.push({ id: uid(), n: "Epice finalizate", dept: deptId, assignee: "", target: 2, unit: "buc", vals: {}, auto: "epics_done", tag: "", system: true });
   if (!on && has) draft.kpis = draft.kpis.filter((k) => !(k.dept === deptId && k.auto === "epics_done"));
+}
+
+// ---------------------------------------------------------------- PROIECTE
+/** Proiect nou / redenumire / ştergere. Proiectul stă ca etichetă pe taskuri, aşa că redenumirea
+ *  re-etichetează taskurile, iar ştergerea scoate eticheta de pe ele. */
+export function newProject() {
+  const { openForm } = st();
+  openForm({
+    title: "Proiect nou",
+    fields: [{ key: "n", label: "Denumire", required: true, value: "", ph: "ex: ConsilierPlatform" }],
+    validate: (d) => (d.n.trim() ? null : { n: "Denumirea e obligatorie." }),
+    onSubmit: (d, draft) => {
+      const n = d.n.trim();
+      const list = projectsOf(draft);
+      if (list.some((p) => p.toLowerCase() === n.toLowerCase())) return;
+      draft.projects = [...list, n];
+    },
+  });
+}
+
+export function editProject(name: string) {
+  const { openForm } = st();
+  openForm({
+    title: "Editează proiectul",
+    fields: [{ key: "n", label: "Denumire", required: true, value: name }],
+    validate: (d) => (d.n.trim() ? null : { n: "Denumirea e obligatorie." }),
+    onSubmit: (d, draft) => {
+      const n = d.n.trim();
+      const list = projectsOf(draft);
+      if (n === name || list.some((p) => p !== name && p.toLowerCase() === n.toLowerCase())) return;
+      draft.projects = list.map((p) => (p === name ? n : p));
+      draft.tasks.forEach((t) => {
+        t.tags = (t.tags || []).map((g) => (g.trim().toLowerCase() === name.toLowerCase() ? n : g));
+      });
+    },
+    onDelete: (draft) => {
+      draft.projects = projectsOf(draft).filter((p) => p !== name);
+      draft.tasks.forEach((t) => {
+        t.tags = (t.tags || []).filter((g) => g.trim().toLowerCase() !== name.toLowerCase());
+      });
+    },
+  });
 }
 
 export function newDept() {

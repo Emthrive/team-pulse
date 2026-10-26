@@ -2,8 +2,8 @@ import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/server/adminFirebase";
 import { memberDepts } from "@/lib/calc";
-import { CRM_DOC_ID, PRIO, PROJECTS } from "@/lib/constants";
-import { mergeTags, typesForDept, validateTask } from "@/lib/taskRules";
+import { CRM_DOC_ID, PRIO } from "@/lib/constants";
+import { mergeTags, projectsOf, typesForDept, validateTask } from "@/lib/taskRules";
 import type { CrmState, Task, TaskEvent, TaskEventKind } from "@/lib/types";
 import { todayISO } from "@/lib/utils";
 
@@ -53,7 +53,7 @@ type Body = {
   title?: string;
   dept?: string; // id departament
   type?: string; // tip livrabil (din departamentul ales)
-  project?: string; // unul din PROJECTS
+  project?: string; // unul din proiectele din baza de date (S.projects)
   assignee?: string; // id membru; gol = nealocat (backlog echipă)
   deadline?: string; // YYYY-MM-DD, opțional
   priority?: string; // "normala" | "critica"
@@ -120,8 +120,9 @@ export async function POST(req: Request) {
       if (input.type && input.dept && !types.includes(input.type)) {
         errors.ttype = `Tip invalid pentru departament. Permise: ${types.join(", ") || "niciunul (lasă gol)"}.`;
       }
-      if (input.project && !PROJECTS.includes(input.project)) {
-        errors.project = `Proiect invalid. Permise: ${PROJECTS.join(", ")}.`;
+      const projects = projectsOf(S);
+      if (input.project && !projects.includes(input.project)) {
+        errors.project = `Proiect invalid. Permise: ${projects.join(", ")}.`;
       }
       if (!PRIO.some((p) => p.id === input.priority)) errors.priority = "Prioritate invalidă (normala / critica).";
       if (input.deadline && !/^\d{4}-\d{2}-\d{2}$/.test(input.deadline)) {

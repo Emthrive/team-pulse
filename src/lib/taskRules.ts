@@ -4,6 +4,7 @@
 //  funcții pure, ca să poată rula și pe server.
 // ============================================================
 
+import { DEFAULT_PROJECTS } from "./constants";
 import type { Kpi, Task } from "./types";
 
 /** Tipurile de livrabil ale unui departament = etichetele („Filtru etichetă") KPI-urilor lui.
@@ -77,4 +78,9 @@ export function retagTasks(tasks: Task[], deptId: string, oldTag: string, newTag
     const rest = t.tags.filter((g) => g.trim().toLowerCase() !== from);
     t.tags = newTag.trim() ? [newTag.trim(), ...rest] : rest;
   });
+}
+
+/** Proiectele din baza de date (cu fallback pe lista implicită până rulează migrarea). */
+export function projectsOf(S: { projects?: string[] }): string[] {
+  return S.projects && S.projects.length ? S.projects : DEFAULT_PROJECTS;
 }

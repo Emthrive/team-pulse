@@ -23,8 +23,8 @@ export const CRIT: { id: string; n: string }[] = [
   { id: "autonomie", n: "Autonomie (fără supervizare)" },
 ];
 
-/** Proiectele interne (listă fixă deocamdată) — înlocuiesc etichetele libere de pe taskuri. */
-export const PROJECTS = ["TeamPulse", "Emthrive", "CRM", "SuccesPlus", "ConsilierPlatform"];
+/** Proiectele implicite — lista reală e în baza de date (S.projects), gestionată din Setări. */
+export const DEFAULT_PROJECTS = ["TeamPulse", "Emthrive", "CRM", "SuccesPlus", "ConsilierPlatform"];
 
 export const TABS: { id: TabId; n: string }[] = [
   { id: "tasks", n: "Taskuri" },

@@ -4,13 +4,14 @@
 // ============================================================
 import { exportCsv, exportJson, importJson, resetAll } from "@/lib/actions";
 import { useRole } from "@/lib/admin";
-import { editDept, newDept } from "@/lib/forms";
+import { editDept, editProject, newDept, newProject } from "@/lib/forms";
+import { projectsOf } from "@/lib/taskRules";
 import { useStore } from "@/lib/store";
 import { Pencil } from "lucide-react";
 
 export function Settings() {
   const S = useStore((s) => s.S)!;
-  const { admin } = useRole();
+  const { admin, elevated } = useRole();
 
   return (
     <>
@@ -39,6 +40,40 @@ export function Settings() {
             >
               <Pencil size={15} />
             </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Proiectele (etichete pe taskuri) — gestionate de admin/manager. */}
+      <div className="sec">
+        <h2>Proiecte</h2>
+        <span className="rule" />
+        {elevated && (
+          <button className="act" onClick={() => newProject()}>
+            + adaugă
+          </button>
+        )}
+      </div>
+      <div className="card">
+        {projectsOf(S).map((p) => (
+          <div className="lead" key={p}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 13.5 }}>{p}</div>
+              <div className="mini">
+                {S.tasks.filter((t) => (t.tags || []).some((g) => g.trim().toLowerCase() === p.toLowerCase())).length}{" "}
+                taskuri
+              </div>
+            </div>
+            {elevated && (
+              <button
+                className="btn ghost sm"
+                style={{ display: "inline-flex", alignItems: "center" }}
+                onClick={() => editProject(p)}
+                title="Editează"
+              >
+                <Pencil size={15} />
+              </button>
+            )}
           </div>
         ))}
       </div>
